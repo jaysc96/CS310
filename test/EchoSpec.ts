@@ -9,7 +9,6 @@ import {InsightResponse} from "../src/controller/IInsightFacade";
 
 describe("EchoSpec", function () {
 
-
     function sanityCheck(response: InsightResponse) {
         expect(response).to.have.property('code');
         expect(response).to.have.property('body');
@@ -64,5 +63,4 @@ describe("EchoSpec", function () {
         expect(out.body).to.have.property('error');
         expect(out.body).to.deep.equal({error: 'Message not provided'});
     });
-
 });

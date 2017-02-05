@@ -11,6 +11,21 @@ export interface InsightResponse {
 
 export interface QueryRequest {
     // you can define your own structure that complies with the EBNF here
+    "WHERE": {
+        "AND"?: Array<{}>,
+        "OR"?: Array<{}>,
+        "GT"?: {},
+        "LT"?: {},
+        "EQ"?: {},
+        "IS"?: {},
+        "NOT"?: {},
+
+    },
+    "OPTIONS": {
+        "COLUMNS": string[],
+        "ORDER": string,
+        "FORM": string
+    }
 }
 
 export interface IInsightFacade {
