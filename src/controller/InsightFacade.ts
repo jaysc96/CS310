@@ -1,7 +1,7 @@
 /**
  * This is the main programmatic entry point for the project.
  */
-import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
+import {IInsightFacade, InsightResponse, QueryRequest, QueryResponse} from "./IInsightFacade";
 import Log from "../Util";
 import Dataset from "../Dataset";
 
@@ -29,9 +29,8 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill({code: 201, body: {}});
                 else
                     fulfill({code: 204, body: {}});
-                that.saveDataset(id, data);
             }).catch(function (err) {
-                reject({code: 400, body: {}});
+                reject({code: 400, body: {error: err.message}});
             });
         });
     }
@@ -40,13 +39,29 @@ export default class InsightFacade implements IInsightFacade {
         let that = this;
         return new Promise(function (fulfill, reject) {
             if(that.dataStruct.hasOwnProperty(id)) {
+                that.removeFile(id);
                 delete that.dataStruct[id];
+                fulfill({code: 204, body: {}});
             }
+            else
+                reject({code: 404, body: {error: "Dataset to be removed was not added prevously"}});
         });
     }
 
     performQuery(query: QueryRequest): Promise <InsightResponse> {
-        return null;
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            that.getQueryData(query).then(function (qr) {
+                fulfill({code: 200, body: qr});
+            })
+        });
+    }
+
+    getQueryData(where: Object): Promise<QueryResponse> {
+        let that = this;
+        return new Promise (function (fulfill, reject) {
+
+        });
     }
 
     processDataset(id: string, content: string): Promise <Dataset> {
@@ -59,7 +74,6 @@ export default class InsightFacade implements IInsightFacade {
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
                 zip.folder(id).forEach(function (relativePath, file) {
                     promises.push(file.async('string').then(JSON.parse).then(function (obj) {
-                        fulfill();
                         for (let i in obj.result) {
                             if (obj.result[i].hasOwnProperty("Course")) {
                                 let c: any = {};
@@ -79,18 +93,17 @@ export default class InsightFacade implements IInsightFacade {
                         Log.trace(err.message);
                     }));
                 });
-            }).then(function () {
-                Promise.all(promises).catch(function (err: Error) {
-                    Log.trace(err.message);
-                    reject(err);
-                }).then(function () {
+                Promise.all(promises).then(function () {
+                    if(set.data.length == 0)
+                        reject();
                     fulfill(set);
+                    that.saveFile(id, set);
                 });
-            })
+            });
         })
     }
 
-    saveDataset(id: string, set: Dataset) {
+    saveFile(id: string, set: Dataset) {
         let fs = require('fs');
         this.dataStruct[id] = set;
         let s = JSON.stringify(this.dataStruct[id].data);
@@ -102,5 +115,10 @@ export default class InsightFacade implements IInsightFacade {
         }
 
         fs.writeFileSync("./data/" + id + ".json", s);
+    }
+
+    removeFile(id: string) {
+        let fs = require('fs');
+        fs.unlinkSync('./data/' + id + ".json");
     }
 }

@@ -1,3 +1,4 @@
+///<reference path="../node_modules/@types/mocha/index.d.ts"/>
 /**
  * Created by jaysinghchauhan on 2/4/17.
  */
@@ -44,6 +45,17 @@ describe("InsightFacadeSpec", function () {
         inf.addDataset('courses', text).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
             expect(inr.code).to.equal(201);
+        }).catch(function (err: Error) {
+            Log.error(err.message);
+            expect.fail();
+        });
+        done();
+    });
+
+    it("removeDataset courses", function (done) {
+        inf.removeDataset('courses').then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(204);
         }).catch(function (err: Error) {
             Log.error(err.message);
             expect.fail();
