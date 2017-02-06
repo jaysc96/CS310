@@ -37,27 +37,25 @@ export default class Querying {
     getWhere(where: Where): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set: Dataset;
             try {
                 if (where.hasOwnProperty("AND")) {
-                    set = that.filterAND(where.AND);
+                    fulfill(that.filterAND(where.AND));
                 }
                 else if (where.hasOwnProperty("OR")) {
-                    set = that.filterOR(where.OR);
+                    fulfill(that.filterOR(where.OR));
                 }
                 else if (where.hasOwnProperty("GT")) {
-                    set = that.filterGT(where.GT);
+                    fulfill(that.filterGT(where.GT));
                 }
                 else if (where.hasOwnProperty("LT")) {
-                    set = that.filterLT(where.LT);
+                    fulfill(that.filterLT(where.LT));
                 }
                 else if (where.hasOwnProperty("EQ")) {
-                    set = that.filterEQ(where.EQ);
+                    fulfill(that.filterEQ(where.EQ));
                 }
                 else if (where.hasOwnProperty("IS")) {
-                    set = that.filterIS(where.IS);
+                    fulfill(that.filterIS(where.IS));
                 }
-                fulfill(set);
             }
             catch(err) {
                 reject (err);
@@ -65,74 +63,82 @@ export default class Querying {
         });
     }
 
-    filterAND(and: any[]): Dataset {
-        let set: Dataset;
-        for (let q of and) {
-            if (q.hasOwnProperty("AND")) {
-                set.add(this.filterAND(q));
+    filterAND(and: any[]): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            for (let q of and) {
+                if (q.hasOwnProperty("AND")) {
+                    set.add(that.filterAND(q.AND));
+                }
+                else if (q.hasOwnProperty("OR")) {
+                    set.add(that.filterOR(q.OR));
+                }
+                else if (q.hasOwnProperty("GT")) {
+                    set.add(that.filterGT(q.GT));
+                }
+                else if (q.hasOwnProperty("LT")) {
+                    set.add(that.filterLT(q.LT));
+                }
+                else if (q.hasOwnProperty("EQ")) {
+                    set.add(that.filterEQ(q.EQ));
+                }
+                else if (q.hasOwnProperty("IS")) {
+                    set.add(that.filterIS(q.IS));
+                }
             }
-            else if (q.hasOwnProperty("OR")) {
-                set.add(this.filterOR(q));
-            }
-            else if (q.hasOwnProperty("GT")) {
-                set.add(this.filterGT(q));
-            }
-            else if (q.hasOwnProperty("LT")) {
-                set.add(this.filterLT(q));
-            }
-            else if (q.hasOwnProperty("EQ")) {
-                set.add(this.filterEQ(q));
-            }
-            else if (q.hasOwnProperty("IS")) {
-                set.add(this.filterIS(q));
-            }
-        }
-        set = set.merge("AND");
-        return set;
+            fulfill(set.merge("AND"));
+        });
     }
 
-    filterOR(or: any[]): Dataset {
-        let set: Dataset;
-        for (let q of or) {
-            if (q.hasOwnProperty("AND")) {
-                set.add(this.filterAND(q));
+    filterOR(or: any[]): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            for (let q of or) {
+                if (q.hasOwnProperty("AND")) {
+                    set.add(that.filterAND(q.AND));
+                }
+                else if (q.hasOwnProperty("OR")) {
+                    set.add(that.filterOR(q.OR));
+                }
+                else if (q.hasOwnProperty("GT")) {
+                    set.add(that.filterGT(q.GT));
+                }
+                else if (q.hasOwnProperty("LT")) {
+                    set.add(that.filterLT(q.LT));
+                }
+                else if (q.hasOwnProperty("EQ")) {
+                    set.add(that.filterEQ(q.EQ));
+                }
+                else if (q.hasOwnProperty("IS")) {
+                    set.add(that.filterIS(q.IS));
+                }
             }
-            else if (q.hasOwnProperty("OR")) {
-                set.add(this.filterOR(q));
-            }
-            else if (q.hasOwnProperty("GT")) {
-                set.add(this.filterGT(q));
-            }
-            else if (q.hasOwnProperty("LT")) {
-                set.add(this.filterLT(q));
-            }
-            else if (q.hasOwnProperty("EQ")) {
-                set.add(this.filterEQ(q));
-            }
-            else if (q.hasOwnProperty("IS")) {
-                set.add(this.filterIS(q));
-            }
-        }
-        set = set.merge("OR");
-        return set;
+            fulfill(set.merge("OR"));
+        });
     }
 
-    filterGT(gt: Query): Dataset {
-        let set: Dataset;
-        let data = this.dataSet.data;
-        let key = Object.keys(gt)[0];
-        let bound = gt[key];
-        for (let obj of data) {
-            if(obj[key] > bound) {
-                set.add(obj);
+    filterGT(gt: Query): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            let data = that.dataSet.data;
+            let key = Object.keys(gt)[0];
+            let bound = gt[key];
+            for (let obj of data) {
+                if(obj[key] > bound) {
+                    set.add(obj);
+                }
             }
-        }
-        return set;
+            fulfill(set);
+        });
     }
 
     filterLT(lt: Query): Dataset {
-        let set: Dataset;
-        let data = this.dataSet.data;
+        let that = this;
+        let set = new Dataset();
+        let data = that.dataSet.data;
         let key = Object.keys(lt)[0];
         let bound = lt[key];
         for (let obj of data) {
@@ -143,29 +149,35 @@ export default class Querying {
         return set;
     }
 
-    filterEQ(eq: Query): Dataset {
-        let set: Dataset;
-        let data = this.dataSet.data;
-        let key = Object.keys(eq)[0];
-        let bound = eq[key];
-        for (let obj of data) {
-            if(obj[key] == bound) {
-                set.add(obj);
+    filterEQ(eq: Query): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            let data = that.dataSet.data;
+            let key = Object.keys(eq)[0];
+            let bound = eq[key];
+            for (let obj of data) {
+                if(obj[key] == bound) {
+                    set.add(obj);
+                }
             }
-        }
-        return set;
+            fulfill(set);
+        });
     }
 
-    filterIS(is: Query): Dataset {
-        let set: Dataset;
-        let data = this.dataSet.data;
-        let key = Object.keys(is)[0];
-        let val = is[key];
-        for (let obj of data) {
-            if(obj[key] == val) {
-                set.add(obj);
+    filterIS(is: Query): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            let data = that.dataSet.data;
+            let key = Object.keys(is)[0];
+            let val = is[key];
+            for (let obj of data) {
+                if(obj[key] == val) {
+                    set.add(obj);
+                }
             }
-        }
-        return set;
+            fulfill(set);
+        });
     }
 }

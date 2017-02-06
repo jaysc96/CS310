@@ -10,40 +10,45 @@ export default class Dataset {
         this.data.push(data);
     }
 
-    merge(filter: string): Dataset {
-        let set: Dataset;
-        try {
-            if (typeof this.data[0] != "Dataset" && this.data.length != 2)
-                throw new Error;
-            let set1 = this.data[0];
-            let set2 = this.data[1];
-            if (filter == "AND") {
-                for (let obj of set1) {
-                    if (set2.contains(obj.id)) {
+    merge(filter: string): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            try {
+                if (typeof that.data[0] != "Dataset" && that.data.length != 2)
+                    throw new Error;
+                let set1 = that.data[0];
+                let set2 = that.data[1];
+                if (filter == "AND") {
+                    for (let obj of set1.data) {
+                        if (set2.contains(obj['courses_id'])) {
+                            set.add(obj);
+                        }
+                    }
+                    fulfill(set);
+                }
+                else {
+                    for (let obj of set1.data) {
+                        if (!set2.contains(obj['courses_id'])) {
+                            set.add(obj);
+                        }
+                    }
+                    for (let obj of set2.data) {
                         set.add(obj);
                     }
+                    fulfill(set);
                 }
             }
-            else {
-                for (let obj of set1) {
-                    if (!set2.contains(obj.id)) {
-                        set.add(obj);
-                    }
-                }
-                for (let obj of set2) {
-                    set.add(obj);
-                }
+            catch (err) {
+                Log.error("Cannot merge on non-dataset array of more than 2 elements");
+                reject(err);
             }
-        }
-        catch (err) {
-            Log.error("Cannot merge on non-dataset array of more than 2 elements");
-            return null;
-        }
+        });
     }
 
     contains(id: string): boolean {
         for (let data of this.data) {
-            if (data.id == id)
+            if (data['course_id'] == id)
                 return true;
         }
         return false;

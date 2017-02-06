@@ -54,7 +54,6 @@ export default class InsightFacade implements IInsightFacade {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let courses = that.dataStruct['courses'];
-            console.log(courses);
             let qr = new Querying(courses);
             let where = query.WHERE;
             let options = query.OPTIONS;
@@ -66,7 +65,9 @@ export default class InsightFacade implements IInsightFacade {
                 }).catch(function (err) {
                     reject({code: 400, body: {error: err.message}});
                 })
-            })
+            }).catch(function (err) {
+                reject({code: 400, body: {error: err.message}});
+            });
         });
     }
 
@@ -74,7 +75,6 @@ export default class InsightFacade implements IInsightFacade {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                let qr: QueryResponse;
                 let columns = opt.COLUMNS;
                 let order = opt.ORDER;
                 let form = opt.FORM;
@@ -82,16 +82,18 @@ export default class InsightFacade implements IInsightFacade {
                     return a[order] - b[order];
                 });
                 if (form == "TABLE") {
-                    qr.render = form;
+                    let render = form;
+                    let result = [];
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
                             c[col] = data[col];
                         }
-                        qr.result.push(c);
+                        result.push(c);
                     }
+                    let qr: QueryResponse = {render: render, result: result};
+                    fulfill(qr);
                 }
-                fulfill(qr);
             }
             catch (err) {
                 reject(err);

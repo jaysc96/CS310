@@ -38,7 +38,7 @@ describe("InsightFacadeSpec", function () {
         });
     });
 
-    it("perform simple query", function (done) {
+    it("perform simple query", function () {
         let query = {
             "WHERE":{
                 "GT":{
@@ -62,5 +62,39 @@ describe("InsightFacadeSpec", function () {
             expect.fail();
         });
     });
+
+    it('perform complex query', function () {
+        let query = {
+            "WHERE":{
+            "OR":[{
+                "IS":{
+                    "courses_dept":"adhe"
+                }
+                },
+
+                {
+                    "EQ":{
+                        "courses_avg":95
+                    }
+                }]
+            },
+            "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_id",
+                "courses_avg"
+            ],
+                "ORDER":"courses_avg",
+                "FORM":"TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr.body));
+            expect.fail();
+        });
+    })
 });
 
