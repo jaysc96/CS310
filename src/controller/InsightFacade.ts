@@ -1,9 +1,11 @@
 /**
  * This is the main programmatic entry point for the project.
  */
-import {IInsightFacade, InsightResponse, QueryRequest, QueryResponse} from "./IInsightFacade";
+import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 import Log from "../Util";
 import Dataset from "../Dataset";
+import Querying from "../Querying";
+import {QueryResponse, Options} from "../Querying";
 
 export interface Struct {
     [id: string]: Dataset
@@ -24,7 +26,7 @@ export default class InsightFacade implements IInsightFacade {
             if(that.dataStruct.hasOwnProperty(id))
                 flag = 1;
 
-            that.processDataset(id, content).then(function (data) {
+            that.processDataset(id, content).then(function (bool: boolean) {
                 if (flag == 1)
                     fulfill({code: 201, body: {}});
                 else
@@ -38,7 +40,7 @@ export default class InsightFacade implements IInsightFacade {
     removeDataset(id: string): Promise<InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            if(that.dataStruct.hasOwnProperty(id)) {
+            if (that.dataStruct.hasOwnProperty(id)) {
                 that.removeFile(id);
                 delete that.dataStruct[id];
                 fulfill({code: 204, body: {}});
@@ -51,56 +53,87 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            that.getQueryData(query).then(function (qr) {
-                fulfill({code: 200, body: qr});
+            let courses = that.dataStruct['courses'];
+            console.log(courses);
+            let qr = new Querying(courses);
+            let where = query.WHERE;
+            let options = query.OPTIONS;
+            qr.getWhere(where).then(function (set) {
+                that.renderOptions(options, set).then(function (qr) {
+                    let render = qr.render;
+                    let result = qr.result;
+                    fulfill({code: 200, body: {render, result}});
+                }).catch(function (err) {
+                    reject({code: 400, body: {error: err.message}});
+                })
             })
         });
     }
 
-    getQueryData(where: Object): Promise<QueryResponse> {
+    renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
         let that = this;
-        return new Promise (function (fulfill, reject) {
-
-        });
+        return new Promise(function (fulfill, reject) {
+            try {
+                let qr: QueryResponse;
+                let columns = opt.COLUMNS;
+                let order = opt.ORDER;
+                let form = opt.FORM;
+                set.data.sort(function (a, b) {
+                    return a[order] - b[order];
+                });
+                if (form == "TABLE") {
+                    qr.render = form;
+                    for (let data of set.data) {
+                        let c: any = {};
+                        for (let col of columns) {
+                            c[col] = data[col];
+                        }
+                        qr.result.push(c);
+                    }
+                }
+                fulfill(qr);
+            }
+            catch (err) {
+                reject(err);
+            }
+        })
     }
 
-    processDataset(id: string, content: string): Promise <Dataset> {
+    processDataset(id: string, content: string): Promise <boolean> {
         let that = this;
+        let set = new Dataset();
         return new Promise(function (fulfill, reject) {
             let JSZip = require("jszip");
             let promises: Promise<any>[] = [];
-            let set = new Dataset();
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
                 zip.folder(id).forEach(function (relativePath, file) {
                     promises.push(file.async('string').then(JSON.parse).then(function (obj) {
-                        for (let i in obj.result) {
-                            if (obj.result[i].hasOwnProperty("Course")) {
+                        for (let res of obj.result) {
+                            if (res.hasOwnProperty("Course")) {
                                 let c: any = {};
-                                c[id + '_uuid'] = obj.result[i].id;
-                                c[id + '_id'] = obj.result[i].Course;
-                                c[id + '_dept'] = obj.result[i].Subject;
-                                c[id + '_title'] = obj.result[i].Title;
-                                c[id + '_avg'] = obj.result[i].Avg;
-                                c[id + '_instructor'] = obj.result[i].Professor;
-                                c[id + '_pass'] = obj.result[i].Pass;
-                                c[id + '_fail'] = obj.result[i].Fail;
-                                c[id + '_audit'] = obj.result[i].Audit;
+                                c[id + '_uuid'] = res.id;
+                                c[id + '_id'] = res.Course;
+                                c[id + '_dept'] = res.Subject;
+                                c[id + '_title'] = res.Title;
+                                c[id + '_avg'] = res.Avg;
+                                c[id + '_instructor'] = res.Professor;
+                                c[id + '_pass'] = res.Pass;
+                                c[id + '_fail'] = res.Fail;
+                                c[id + '_audit'] = res.Audit;
                                 set.add(c);
                             }
                         }
-                    }).catch (function (err: Error) {
-                        Log.trace(err.message);
                     }));
                 });
                 Promise.all(promises).then(function () {
-                    if(set.data.length == 0)
-                        reject();
-                    fulfill(set);
                     that.saveFile(id, set);
+                    fulfill(set);
                 });
+            }).catch(function (err: Error) {
+                reject(err);
             });
-        })
+        });
     }
 
     saveFile(id: string, set: Dataset) {

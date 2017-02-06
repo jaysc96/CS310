@@ -1,4 +1,3 @@
-///<reference path="../node_modules/@types/mocha/index.d.ts"/>
 /**
  * Created by jaysinghchauhan on 2/4/17.
  */
@@ -9,7 +8,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 
 describe("InsightFacadeSpec", function () {
     let fs = require("fs");
-    let inf = new InsightFacade();
+    let inf: InsightFacade;
 
     before(function () {
         Log.test('Before: ' + (<any>this).test.parent.title);
@@ -28,39 +27,40 @@ describe("InsightFacadeSpec", function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
     });
 
-    it("addDataset courses", function (done) {
+    it("addDataset courses", function () {
         let text = fs.readFileSync('courses.zip');
-        inf.addDataset('courses', text).then(function (inr: InsightResponse) {
+        return inf.addDataset('courses', text).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
             expect(inr.code).to.equal(204);
         }).catch(function (err: Error) {
             Log.error(err.message);
             expect.fail();
         });
-        done();
     });
 
-    it("addDataset courses again", function (done) {
-        let text = fs.readFileSync('courses.zip');
-        inf.addDataset('courses', text).then(function (inr: InsightResponse) {
+    it("perform simple query", function (done) {
+        let query = {
+            "WHERE":{
+                "GT":{
+                    "courses_avg":97
+                }
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                "ORDER":"courses_avg",
+                "FORM":"TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(201);
-        }).catch(function (err: Error) {
-            Log.error(err.message);
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr.body));
             expect.fail();
         });
-        done();
-    });
-
-    it("removeDataset courses", function (done) {
-        inf.removeDataset('courses').then(function (inr: InsightResponse) {
-            Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(204);
-        }).catch(function (err: Error) {
-            Log.error(err.message);
-            expect.fail();
-        });
-        done();
     });
 });
 

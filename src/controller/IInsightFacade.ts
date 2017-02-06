@@ -4,6 +4,7 @@
  * You should not change this interface at all or the test suite will not work.
  */
 
+import {Where, Options} from "../Querying";
 export interface InsightResponse {
     code: number;
     body: {}; // the actual response
@@ -11,29 +12,8 @@ export interface InsightResponse {
 
 export interface QueryRequest {
     // you can define your own structure that complies with the EBNF here
-    "WHERE": {
-        "AND"?: Query[],
-        "OR"?: Query[],
-        "GT"?: Query,
-        "LT"?: Query,
-        "EQ"?: Query,
-        "IS"?: Query,
-        "NOT"?: Query
-    },
-    "OPTIONS": {
-        "COLUMNS": string[],
-        "ORDER": string,
-        "FORM": string
-    }
-}
-
-export interface Query {
-    [key: string]: any
-}
-
-export interface QueryResponse {
-    render: string;
-    result: any[];
+    "WHERE": Where,
+    "OPTIONS": Options
 }
 
 export interface IInsightFacade {
