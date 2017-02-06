@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
-
+/*
 describe("InsightFacadeSpec", function () {
     let fs = require("fs");
     let inf: InsightFacade;
@@ -97,4 +97,4 @@ describe("InsightFacadeSpec", function () {
         });
     })
 });
-
+*/
