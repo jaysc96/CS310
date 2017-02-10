@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import Log from "../src/Util";
 import {InsightResponse} from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
-/*
+
 describe("InsightFacadeSpec", function () {
     let fs = require("fs");
     let inf: InsightFacade;
@@ -48,7 +48,7 @@ describe("InsightFacadeSpec", function () {
             "OPTIONS":{
                 "COLUMNS":[
                     "courses_dept",
-                    "courses_avg"
+                    "courses_avg",
                 ],
                 "ORDER":"courses_avg",
                 "FORM":"TABLE"
@@ -66,24 +66,35 @@ describe("InsightFacadeSpec", function () {
     it('perform complex query', function () {
         let query = {
             "WHERE":{
-            "OR":[{
-                "IS":{
-                    "courses_dept":"adhe"
-                }
-                },
-
-                {
-                    "EQ":{
-                        "courses_avg":95
+                "OR":[
+                    {
+                        "AND":[
+                            {
+                                "GT":{
+                                    "courses_avg":90
+                                }
+                            },
+                            {
+                                "IS":{
+                                    "courses_dept":"adhe"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "EQ":{
+                            "courses_avg":95
+                        }
                     }
-                }]
-            },
+                ]
+                    },
             "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_id",
-                "courses_avg"
-            ],
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
                 "ORDER":"courses_avg",
                 "FORM":"TABLE"
             }
@@ -95,6 +106,15 @@ describe("InsightFacadeSpec", function () {
             Log.error(JSON.stringify(inr.body));
             expect.fail();
         });
-    })
+    });
+
+    it("removeDataset courses", function () {
+        return inf.removeDataset('courses').then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(204);
+        }).catch(function (err: Error) {
+            Log.error(err.message);
+            expect.fail();
+        });
+    });
 });
-*/

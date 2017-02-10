@@ -66,56 +66,78 @@ export default class Querying {
     filterAND(and: any[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
+            let pr: Promise<Dataset>[] = [];
             for (let q of and) {
                 if (q.hasOwnProperty("AND")) {
-                    set.add(that.filterAND(q.AND));
+                    pr.push(that.filterAND(q.AND));
                 }
                 else if (q.hasOwnProperty("OR")) {
-                    set.add(that.filterOR(q.OR));
+                    pr.push(that.filterOR(q.OR));
                 }
                 else if (q.hasOwnProperty("GT")) {
-                    set.add(that.filterGT(q.GT));
+                    pr.push(that.filterGT(q.GT));
                 }
                 else if (q.hasOwnProperty("LT")) {
-                    set.add(that.filterLT(q.LT));
+                    pr.push(that.filterLT(q.LT));
                 }
                 else if (q.hasOwnProperty("EQ")) {
-                    set.add(that.filterEQ(q.EQ));
+                    pr.push(that.filterEQ(q.EQ));
                 }
                 else if (q.hasOwnProperty("IS")) {
-                    set.add(that.filterIS(q.IS));
+                    pr.push(that.filterIS(q.IS));
                 }
             }
-            fulfill(set.merge("AND"));
+            Promise.all(pr).then(function (set: Dataset[]) {
+                if(set.length == 2) {
+                    let data1: any[] = set[0].data;
+                    let data2: any[] = set[1].data;
+                    let data = that.intersection(data1, data2);
+                    let dset = new Dataset();
+                    dset.data = data;
+                    fulfill(dset);
+                }
+            }).catch (function (err) {
+                reject(err);
+            });
         });
     }
 
     filterOR(or: any[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
+            let pr: Promise<Dataset>[] = [];
             for (let q of or) {
                 if (q.hasOwnProperty("AND")) {
-                    set.add(that.filterAND(q.AND));
+                    pr.push(that.filterAND(q.AND));
                 }
                 else if (q.hasOwnProperty("OR")) {
-                    set.add(that.filterOR(q.OR));
+                    pr.push(that.filterOR(q.OR));
                 }
                 else if (q.hasOwnProperty("GT")) {
-                    set.add(that.filterGT(q.GT));
+                    pr.push(that.filterGT(q.GT));
                 }
                 else if (q.hasOwnProperty("LT")) {
-                    set.add(that.filterLT(q.LT));
+                    pr.push(that.filterLT(q.LT));
                 }
                 else if (q.hasOwnProperty("EQ")) {
-                    set.add(that.filterEQ(q.EQ));
+                    pr.push(that.filterEQ(q.EQ));
                 }
                 else if (q.hasOwnProperty("IS")) {
-                    set.add(that.filterIS(q.IS));
+                    pr.push(that.filterIS(q.IS));
                 }
             }
-            fulfill(set.merge("OR"));
+            Promise.all(pr).then(function (set: Dataset[]) {
+                if(set.length == 2) {
+                    let data1: any[] = set[0].data;
+                    let data2: any[] = set[1].data;
+                    let data = that.union(data1, data2);
+                    let dset = new Dataset();
+                    dset.data = data;
+                    fulfill(dset);
+                }
+            }).catch (function (err) {
+                reject(err);
+            });
         });
     }
 
@@ -135,18 +157,20 @@ export default class Querying {
         });
     }
 
-    filterLT(lt: Query): Dataset {
+    filterLT(lt: Query): Promise<Dataset> {
         let that = this;
-        let set = new Dataset();
-        let data = that.dataSet.data;
-        let key = Object.keys(lt)[0];
-        let bound = lt[key];
-        for (let obj of data) {
-            if(obj[key] < bound) {
-                set.add(obj);
+        return new Promise(function (fulfill, reject) {
+            let set = new Dataset();
+            let data = that.dataSet.data;
+            let key = Object.keys(lt)[0];
+            let bound = lt[key];
+            for (let obj of data) {
+                if(obj[key] < bound) {
+                    set.add(obj);
+                }
             }
-        }
-        return set;
+            fulfill(set);
+        });
     }
 
     filterEQ(eq: Query): Promise<Dataset> {
@@ -179,5 +203,28 @@ export default class Querying {
             }
             fulfill(set);
         });
+    }
+
+    union(d1: any[], d2:any[]): any[] {
+        let d: any[] = [];
+        for (let obj of d1) {
+            if (!d2.includes(obj)) {
+                d.push(obj);
+            }
+        }
+        for (let obj of d2) {
+            d.push(obj);
+        }
+        return d;
+    }
+
+    intersection(d1: any[], d2: any[]): any[] {
+        let d: any[] = [];
+        for (let obj of d1) {
+            if (d2.includes(obj)) {
+                d.push(obj);
+            }
+        }
+        return d;
     }
 }
