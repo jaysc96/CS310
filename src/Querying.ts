@@ -13,7 +13,7 @@ export interface Where {
     "LT"?: Query,
     "EQ"?: Query,
     "IS"?: Query,
-    "NOT"?: Query
+    "NOT"?: Where
 }
 
 export interface Options {
@@ -56,6 +56,12 @@ export default class Querying {
                 else if (where.hasOwnProperty("IS")) {
                     fulfill(that.filterIS(where.IS));
                 }
+                else if (where.hasOwnProperty("NOT")) {
+                    fulfill(that.filterNOT(where.NOT));
+                }
+                else {
+                    new Error("Invalid query");
+                }
             }
             catch(err) {
                 reject (err);
@@ -85,6 +91,12 @@ export default class Querying {
                 }
                 else if (q.hasOwnProperty("IS")) {
                     pr.push(that.filterIS(q.IS));
+                }
+                else if (q.hasOwnProperty("NOT")) {
+                    pr.push(that.filterNOT(q.NOT));
+                }
+                else {
+                    reject(new Error("Invalid query"));
                 }
             }
             Promise.all(pr).then(function (set: Dataset[]) {
@@ -125,6 +137,12 @@ export default class Querying {
                 else if (q.hasOwnProperty("IS")) {
                     pr.push(that.filterIS(q.IS));
                 }
+                else if (q.hasOwnProperty("NOT")) {
+                    pr.push(that.filterNOT(q.NOT));
+                }
+                else {
+                    reject(Error("Invalid query"));
+                }
             }
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
@@ -144,64 +162,117 @@ export default class Querying {
     filterGT(gt: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
-            let data = that.dataSet.data;
-            let key = Object.keys(gt)[0];
-            let bound = gt[key];
-            for (let obj of data) {
-                if(obj[key] > bound) {
-                    set.add(obj);
+            try {
+                let set = new Dataset();
+                let data = that.dataSet.data;
+                let keys = Object.keys(gt);
+                if(keys.length != 1)
+                    reject(Error("Invalid query"));
+                let key = keys[0];
+                let bound = gt[key];
+                for (let obj of data) {
+                    if (obj[key] > bound) {
+                        set.add(obj);
+                    }
                 }
+                fulfill(set);
             }
-            fulfill(set);
+            catch(err) {
+                reject(err);
+            }
         });
     }
 
     filterLT(lt: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
-            let data = that.dataSet.data;
-            let key = Object.keys(lt)[0];
-            let bound = lt[key];
-            for (let obj of data) {
-                if(obj[key] < bound) {
-                    set.add(obj);
+            try {
+                let set = new Dataset();
+                let data = that.dataSet.data;
+                let keys = Object.keys(lt);
+                if(keys.length != 1)
+                    reject(Error("Invalid query"));
+                let key = keys[0];
+                let bound = lt[key];
+                for (let obj of data) {
+                    if (obj[key] < bound) {
+                        set.add(obj);
+                    }
                 }
+                fulfill(set);
             }
-            fulfill(set);
+            catch (err) {
+                reject(err);
+            }
         });
     }
 
     filterEQ(eq: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
-            let data = that.dataSet.data;
-            let key = Object.keys(eq)[0];
-            let bound = eq[key];
-            for (let obj of data) {
-                if(obj[key] == bound) {
-                    set.add(obj);
+            try {
+                let set = new Dataset();
+                let data = that.dataSet.data;
+                let keys = Object.keys(eq);
+                if(keys.length != 1)
+                    reject(Error("Invalid query"));
+                let key = keys[0];
+                let bound = eq[key];
+                for (let obj of data) {
+                    if (obj[key] == bound) {
+                        set.add(obj);
+                    }
                 }
+                fulfill(set);
             }
-            fulfill(set);
+            catch (err) {
+                reject(err);
+            }
         });
     }
 
     filterIS(is: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let set = new Dataset();
-            let data = that.dataSet.data;
-            let key = Object.keys(is)[0];
-            let val = is[key];
-            for (let obj of data) {
-                if(obj[key] == val) {
-                    set.add(obj);
+            try {
+                let set = new Dataset();
+                let data = that.dataSet.data;
+                let keys = Object.keys(is);
+                if(keys.length != 1)
+                    reject(Error("Invalid query"));
+                let key = keys[0];
+                let val = is[key];
+                for (let obj of data) {
+                    if (obj[key] == val) {
+                        set.add(obj);
+                    }
                 }
+                fulfill(set);
             }
-            fulfill(set);
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    filterNOT(not: Where): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            try {
+                let set = new Dataset();
+                let data = that.dataSet.data;
+                let keys = Object.keys(not);
+                if (keys.length != 1)
+                    reject(Error("Invalid query"));
+                let key = keys[0];
+                that.getWhere(not).then(function (dset) {
+                    set.data = that.negation(dset.data, data);
+                    fulfill(set);
+                });
+            }
+            catch(err) {
+                reject(err);
+            }
         });
     }
 
@@ -226,5 +297,15 @@ export default class Querying {
             }
         }
         return d;
+    }
+
+    negation(d: any[], universal: any[]): any[] {
+        let D: any[] = [];
+        for (let obj of universal) {
+            if (!d.includes(obj)) {
+                D.push(obj);
+            }
+        }
+        return D;
     }
 }

@@ -41,8 +41,10 @@ describe("InsightFacadeSpec", function () {
     it("perform simple query", function () {
         let query = {
             "WHERE":{
-                "GT":{
-                    "courses_avg":97
+                "NOT": {
+                    "LT": {
+                        "courses_avg": 97
+                    }
                 }
             },
             "OPTIONS":{
