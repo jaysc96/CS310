@@ -7,8 +7,8 @@ export interface Query {
 }
 
 export interface Where {
-    "AND"?: any[2],
-    "OR"?: any[2],
+    "AND"?: Where[],
+    "OR"?: Where[],
     "GT"?: Query,
     "LT"?: Query,
     "EQ"?: Query,
@@ -57,47 +57,31 @@ export default class Querying {
                     fulfill(that.filterIS(where.IS));
                 }
                 else if (where.hasOwnProperty("NOT")) {
-                    fulfill(that.filterNOT(where.NOT));
+                    that.getWhere(where.NOT).then(function (dset) {
+                        let set = new Dataset();
+                        set.data = that.dataSet.data;
+                        dset.data = that.negation(dset.data, set.data);
+                        fulfill(dset);
+                    }).catch(function (err) {
+                        reject(err);
+                    });
                 }
                 else {
                     new Error("Invalid query");
                 }
             }
             catch(err) {
-                reject (err);
+                reject(err);
             }
         });
     }
 
-    filterAND(and: any[]): Promise<Dataset> {
+    filterAND(and: Where[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
             for (let q of and) {
-                if (q.hasOwnProperty("AND")) {
-                    pr.push(that.filterAND(q.AND));
-                }
-                else if (q.hasOwnProperty("OR")) {
-                    pr.push(that.filterOR(q.OR));
-                }
-                else if (q.hasOwnProperty("GT")) {
-                    pr.push(that.filterGT(q.GT));
-                }
-                else if (q.hasOwnProperty("LT")) {
-                    pr.push(that.filterLT(q.LT));
-                }
-                else if (q.hasOwnProperty("EQ")) {
-                    pr.push(that.filterEQ(q.EQ));
-                }
-                else if (q.hasOwnProperty("IS")) {
-                    pr.push(that.filterIS(q.IS));
-                }
-                else if (q.hasOwnProperty("NOT")) {
-                    pr.push(that.filterNOT(q.NOT));
-                }
-                else {
-                    reject(new Error("Invalid query"));
-                }
+                pr.push(that.getWhere(q));
             }
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
@@ -114,35 +98,12 @@ export default class Querying {
         });
     }
 
-    filterOR(or: any[]): Promise<Dataset> {
+    filterOR(or: Where[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
             for (let q of or) {
-                if (q.hasOwnProperty("AND")) {
-                    pr.push(that.filterAND(q.AND));
-                }
-                else if (q.hasOwnProperty("OR")) {
-                    pr.push(that.filterOR(q.OR));
-                }
-                else if (q.hasOwnProperty("GT")) {
-                    pr.push(that.filterGT(q.GT));
-                }
-                else if (q.hasOwnProperty("LT")) {
-                    pr.push(that.filterLT(q.LT));
-                }
-                else if (q.hasOwnProperty("EQ")) {
-                    pr.push(that.filterEQ(q.EQ));
-                }
-                else if (q.hasOwnProperty("IS")) {
-                    pr.push(that.filterIS(q.IS));
-                }
-                else if (q.hasOwnProperty("NOT")) {
-                    pr.push(that.filterNOT(q.NOT));
-                }
-                else {
-                    reject(Error("Invalid query"));
-                }
+                pr.push(that.getWhere(q));
             }
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
@@ -255,27 +216,6 @@ export default class Querying {
         });
     }
 
-    filterNOT(not: Where): Promise<Dataset> {
-        let that = this;
-        return new Promise(function (fulfill, reject) {
-            try {
-                let set = new Dataset();
-                let data = that.dataSet.data;
-                let keys = Object.keys(not);
-                if (keys.length != 1)
-                    reject(Error("Invalid query"));
-                let key = keys[0];
-                that.getWhere(not).then(function (dset) {
-                    set.data = that.negation(dset.data, data);
-                    fulfill(set);
-                });
-            }
-            catch(err) {
-                reject(err);
-            }
-        });
-    }
-
     union(d1: any[], d2:any[]): any[] {
         let d: any[] = [];
         for (let obj of d1) {
@@ -300,12 +240,15 @@ export default class Querying {
     }
 
     negation(d: any[], universal: any[]): any[] {
-        let D: any[] = [];
-        for (let obj of universal) {
-            if (!d.includes(obj)) {
-                D.push(obj);
-            }
+        let D = universal.slice();
+        for (let obj of d) {
+            let ind = D.findIndex(function (element) {
+                return element == obj;
+            });
+            D.splice(ind, 1);
         }
+        if (D.length == 0)
+            throw new Error("No dataset present");
         return D;
     }
 }
