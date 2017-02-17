@@ -67,7 +67,7 @@ export default class Querying {
                     });
                 }
                 else {
-                    new Error("Invalid query");
+                    throw new Error("Invalid query");
                 }
             }
             catch(err) {
@@ -128,7 +128,7 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(gt);
                 if(keys.length != 1)
-                    reject(Error("Invalid query"));
+                    reject(new Error("Invalid query"));
                 let key = keys[0];
                 let bound = gt[key];
                 for (let obj of data) {
@@ -152,7 +152,7 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(lt);
                 if(keys.length != 1)
-                    reject(Error("Invalid query"));
+                    reject(new Error("Invalid query"));
                 let key = keys[0];
                 let bound = lt[key];
                 for (let obj of data) {
@@ -176,7 +176,7 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(eq);
                 if(keys.length != 1)
-                    reject(Error("Invalid query"));
+                    reject(new Error("Invalid query"));
                 let key = keys[0];
                 let bound = eq[key];
                 for (let obj of data) {
@@ -200,7 +200,7 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(is);
                 if(keys.length != 1)
-                    reject(Error("Invalid query"));
+                    reject(new Error("Invalid query"));
                 let key = keys[0];
                 let val = is[key];
                 for (let obj of data) {
@@ -208,6 +208,8 @@ export default class Querying {
                         set.add(obj);
                     }
                 }
+                if(set.data.length == 0)
+                    throw new Error("missing: "+key);
                 fulfill(set);
             }
             catch (err) {

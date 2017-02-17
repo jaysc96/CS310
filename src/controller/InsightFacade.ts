@@ -27,10 +27,14 @@ export default class InsightFacade implements IInsightFacade {
                 flag = 1;
 
             that.processDataset(id, content).then(function (bool: boolean) {
-                if (flag == 1)
-                    fulfill({code: 201, body: {}});
+                if (bool) {
+                    if (flag == 1)
+                        fulfill({code: 201, body: {}});
+                    else
+                        fulfill({code: 204, body: {}});
+                }
                 else
-                    fulfill({code: 204, body: {}});
+                    throw new Error("Empty dataset provided");
             }).catch(function (err) {
                 reject({code: 400, body: {error: err.message}});
             });
@@ -66,7 +70,9 @@ export default class InsightFacade implements IInsightFacade {
                     reject({code: 400, body: {error: err.message}});
                 })
             }).catch(function (err) {
-                reject({code: 400, body: {error: err.message}});
+                if (err.message == "Invalid query")
+                    reject({code: 400, body: {error: err.message}});
+                reject({code: 424, body: {missing: err.message}});
             });
         });
     }
@@ -83,7 +89,7 @@ export default class InsightFacade implements IInsightFacade {
                 });
                 if (form == "TABLE") {
                     let render = form;
-                    let result = [];
+                    let result: any[] = [];
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
@@ -130,7 +136,9 @@ export default class InsightFacade implements IInsightFacade {
                 });
                 Promise.all(promises).then(function () {
                     that.saveFile(id, set);
-                    fulfill(set);
+                    if (set.data.length == 0)
+                        fulfill(false);
+                    fulfill(true);
                 });
             }).catch(function (err: Error) {
                 reject(err);
