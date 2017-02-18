@@ -164,8 +164,8 @@ describe("InsightFacadeSpec", function () {
             },
             "OPTIONS": {
                 "COLUMNS": [
+                    "courses_dept",
                     "courses_sys",
-                    "courses_id",
                     "courses_avg",
                     "courses_uuid"
                 ],

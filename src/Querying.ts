@@ -39,22 +39,22 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 if (where.hasOwnProperty("AND")) {
-                    fulfill(that.filterAND(where.AND));
+                    that.filterAND(where.AND).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("OR")) {
-                    fulfill(that.filterOR(where.OR));
+                    that.filterOR(where.OR).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("GT")) {
-                    fulfill(that.filterGT(where.GT));
+                    that.filterGT(where.GT).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("LT")) {
-                    fulfill(that.filterLT(where.LT));
+                    that.filterLT(where.LT).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("EQ")) {
-                    fulfill(that.filterEQ(where.EQ));
+                    that.filterEQ(where.EQ).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("IS")) {
-                    fulfill(that.filterIS(where.IS));
+                    that.filterIS(where.IS).then(fulfill).catch(reject);
                 }
                 else if (where.hasOwnProperty("NOT")) {
                     that.getWhere(where.NOT).then(function (dset) {
@@ -83,6 +83,8 @@ export default class Querying {
             for (let q of and) {
                 pr.push(that.getWhere(q));
             }
+            if (pr.length == 0)
+                reject(new Error("Empty AND"));
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
                     let data1: any[] = set[0].data;
@@ -105,6 +107,8 @@ export default class Querying {
             for (let q of or) {
                 pr.push(that.getWhere(q));
             }
+            if (pr.length == 0)
+                reject(new Error("Empty OR"));
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
                     let data1: any[] = set[0].data;
@@ -128,16 +132,17 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(gt);
                 if(keys.length != 1)
-                    reject(new Error("Invalid query"));
+                    reject(new Error("Invalid GT"));
                 let key = keys[0];
                 let bound = gt[key];
+                if (typeof bound != 'number')
+                    reject(new Error("Invalid GT"));
                 for (let obj of data) {
-                    if (obj[key] > bound) {
+                    if (!obj.hasOwnProperty(key))
+                        reject(new Error(key));
+                    if (obj[key] > bound)
                         set.add(obj);
-                    }
                 }
-                if(set.data.length == 0)
-                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch(err) {
@@ -154,16 +159,17 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(lt);
                 if(keys.length != 1)
-                    reject(new Error("Invalid query"));
+                    reject(new Error("Invalid LT"));
                 let key = keys[0];
                 let bound = lt[key];
+                if (typeof bound != 'number')
+                    reject(new Error("Invalid LT"));
                 for (let obj of data) {
-                    if (obj[key] < bound) {
+                    if (!obj.hasOwnProperty(key))
+                        reject(new Error(key));
+                    if (obj[key] < bound)
                         set.add(obj);
-                    }
                 }
-                if(set.data.length == 0)
-                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
@@ -180,13 +186,16 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(eq);
                 if(keys.length != 1)
-                    reject(new Error("Invalid query"));
+                    reject(new Error("Invalid EQ"));
                 let key = keys[0];
                 let bound = eq[key];
+                if (typeof bound != 'number')
+                    reject(new Error("Invalid EQ"));
                 for (let obj of data) {
-                    if (obj[key] == bound) {
+                    if (!obj.hasOwnProperty(key))
+                        reject(new Error(key));
+                    if (obj[key] == bound)
                         set.add(obj);
-                    }
                 }
                 if(set.data.length == 0)
                     reject(new Error("missing: "+key));
@@ -206,13 +215,16 @@ export default class Querying {
                 let data = that.dataSet.data;
                 let keys = Object.keys(is);
                 if(keys.length != 1)
-                    reject(new Error("Invalid query"));
+                    reject(new Error("Invalid IS"));
                 let key = keys[0];
                 let val = is[key];
+                if (typeof val != 'string')
+                    reject(new Error("Invalid IS"));
                 for (let obj of data) {
-                    if (obj[key] == val) {
+                    if (!obj.hasOwnProperty(key))
+                        reject(new Error(key));
+                    if (obj[key].includes(val))
                         set.add(obj);
-                    }
                 }
                 if(set.data.length == 0)
                     reject(new Error("missing: "+key));

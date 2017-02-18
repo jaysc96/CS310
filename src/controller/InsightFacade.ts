@@ -87,6 +87,12 @@ export default class InsightFacade implements IInsightFacade {
                 let order = opt.ORDER;
                 let form = opt.FORM;
                 let err = "missing: ";
+                if (set.data.length == 0)
+                    reject(new Error ("No such data exists"));
+                if (columns.length == 0)
+                    reject(new Error ("Empty COLUMNS"));
+                if (!set.data[0].hasOwnProperty(order))
+                    reject(new Error ("Invalid ORDER"));
                 set.data.sort(function (a, b) {
                     return a[order] - b[order];
                 });
@@ -115,6 +121,8 @@ export default class InsightFacade implements IInsightFacade {
                     let qr: QueryResponse = {render: render, result: result};
                     fulfill(qr);
                 }
+                else
+                    reject(new Error("Invalid FORM"));
             }
             catch (err) {
                 reject(err);
