@@ -66,13 +66,15 @@ export default class InsightFacade implements IInsightFacade {
                     let render = qr.render;
                     let result = qr.result;
                     fulfill({code: 200, body: {render, result}});
-                }).catch(function (err) {
-                    reject({code: 400, body: {error: err.message}});
+                }).catch(function (err: string) {
+                    reject({code: 424, body: {error: err}});
+                }).catch(function (err: Error) {
+                    reject({code: 400, body: {error: err.message}})
                 })
             }).catch(function (err) {
                 if (err.message == "Invalid query")
                     reject({code: 400, body: {error: err.message}});
-                reject({code: 424, body: {missing: err.message}});
+                reject({code: 424, body: {error: err.message}});
             });
         });
     }
@@ -84,19 +86,32 @@ export default class InsightFacade implements IInsightFacade {
                 let columns = opt.COLUMNS;
                 let order = opt.ORDER;
                 let form = opt.FORM;
+                let err = "missing: ";
                 set.data.sort(function (a, b) {
                     return a[order] - b[order];
                 });
                 if (form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
+                    let flag = 0;
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
-                            c[col] = data[col];
+                            if(data.hasOwnProperty(col))
+                                c[col] = data[col];
+                            else {
+                                if (flag == 1)
+                                    err += ", ";
+                                err += col;
+                                flag = 1;
+                            }
                         }
+                        if (flag == 1)
+                            break;
                         result.push(c);
                     }
+                    if (flag == 1)
+                        reject(err);
                     let qr: QueryResponse = {render: render, result: result};
                     fulfill(qr);
                 }

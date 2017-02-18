@@ -3,7 +3,7 @@
  */
 import {expect} from 'chai';
 import Log from "../src/Util";
-import {InsightResponse} from "../src/controller/IInsightFacade";
+import {InsightResponse, QueryRequest} from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
 
 describe("InsightFacadeSpec", function () {
@@ -107,6 +107,78 @@ describe("InsightFacadeSpec", function () {
         }).catch(function (inr: InsightResponse) {
             Log.error(JSON.stringify(inr.body));
             expect.fail();
+        });
+    });
+
+    it("do not perform invalid 'WHERE' query", function () {
+        let query = {
+            "WHERE":{
+                "OR": [
+                    {
+                        "EQ": {
+                            "courses_avg": 95
+                        }
+                    },
+                    {
+                        "GT": {
+                            "courses_sys": 95
+                        }
+                    }
+                    ]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
+                "ORDER": "courses_avg",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(424);
+        });
+    });
+
+    it("do not perform invalid 'OPTIONS' query", function () {
+        let query = {
+            "WHERE":{
+                "OR": [
+                    {
+                        "EQ": {
+                            "courses_avg": 95
+                        }
+                    },
+                    {
+                        "GT": {
+                            "courses_avg": 95
+                        }
+                    }
+                ]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_sys",
+                    "courses_id",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
+                "ORDER": "courses_avg",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(424);
         });
     });
 

@@ -67,7 +67,7 @@ export default class Querying {
                     });
                 }
                 else {
-                    throw new Error("Invalid query");
+                    reject(new Error("Invalid query"));
                 }
             }
             catch(err) {
@@ -136,6 +136,8 @@ export default class Querying {
                         set.add(obj);
                     }
                 }
+                if(set.data.length == 0)
+                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch(err) {
@@ -160,6 +162,8 @@ export default class Querying {
                         set.add(obj);
                     }
                 }
+                if(set.data.length == 0)
+                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
@@ -184,6 +188,8 @@ export default class Querying {
                         set.add(obj);
                     }
                 }
+                if(set.data.length == 0)
+                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
@@ -209,7 +215,7 @@ export default class Querying {
                     }
                 }
                 if(set.data.length == 0)
-                    throw new Error("missing: "+key);
+                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
