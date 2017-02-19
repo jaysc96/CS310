@@ -197,8 +197,6 @@ export default class Querying {
                     if (obj[key] == bound)
                         set.add(obj);
                 }
-                if(set.data.length == 0)
-                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
@@ -226,8 +224,6 @@ export default class Querying {
                     if (obj[key].includes(val))
                         set.add(obj);
                 }
-                if(set.data.length == 0)
-                    reject(new Error("missing: "+key));
                 fulfill(set);
             }
             catch (err) {
