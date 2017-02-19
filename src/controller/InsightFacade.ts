@@ -57,24 +57,23 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let courses = that.dataStruct['courses'];
-            let qr = new Querying(courses);
             let where = query.WHERE;
             let options = query.OPTIONS;
+            let key = options.ORDER.split('_');
+            if(!that.dataStruct.hasOwnProperty(key[0]))
+                reject({code: 424, body: {missing: key[0]}});
+            let dset = that.dataStruct[key[0]];
+            let qr = new Querying(dset);
             qr.getWhere(where).then(function (set) {
                 that.renderOptions(options, set).then(function (qr) {
                     let render = qr.render;
                     let result = qr.result;
                     fulfill({code: 200, body: {render, result}});
-                }).catch(function (err: string) {
-                    reject({code: 424, body: {error: err}});
-                }).catch(function (err: Error) {
+                }).catch(function (err) {
                     reject({code: 400, body: {error: err.message}})
                 })
             }).catch(function (err) {
-                if (err.message == "Invalid query")
-                    reject({code: 400, body: {error: err.message}});
-                reject({code: 424, body: {error: err.message}});
+                reject({code: 400, body: {error: err.message}});
             });
         });
     }
@@ -136,31 +135,33 @@ export default class InsightFacade implements IInsightFacade {
             let promises: Promise<any>[] = [];
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
-                zip.folder(id).forEach(function (relativePath, file) {
-                    promises.push(file.async('string').then(JSON.parse).then(function (obj) {
-                        for (let res of obj.result) {
-                            if (res.hasOwnProperty("Course")) {
-                                let c: any = {};
-                                c[id + '_uuid'] = res.id;
-                                c[id + '_id'] = res.Course;
-                                c[id + '_dept'] = res.Subject;
-                                c[id + '_title'] = res.Title;
-                                c[id + '_avg'] = res.Avg;
-                                c[id + '_instructor'] = res.Professor;
-                                c[id + '_pass'] = res.Pass;
-                                c[id + '_fail'] = res.Fail;
-                                c[id + '_audit'] = res.Audit;
-                                set.add(c);
+                if(id == 'courses') {
+                    zip.folder(id).forEach(function (relativePath, file) {
+                        promises.push(file.async('string').then(JSON.parse).then(function (obj) {
+                            for (let res of obj.result) {
+                                if (res.hasOwnProperty("Course")) {
+                                    let c: any = {};
+                                    c[id + '_uuid'] = res.id;
+                                    c[id + '_id'] = res.Course;
+                                    c[id + '_dept'] = res.Subject;
+                                    c[id + '_title'] = res.Title;
+                                    c[id + '_avg'] = res.Avg;
+                                    c[id + '_instructor'] = res.Professor;
+                                    c[id + '_pass'] = res.Pass;
+                                    c[id + '_fail'] = res.Fail;
+                                    c[id + '_audit'] = res.Audit;
+                                    set.add(c);
+                                }
                             }
-                        }
-                    }));
-                });
-                Promise.all(promises).then(function () {
-                    that.saveFile(id, set);
-                    if (set.data.length == 0)
-                        fulfill(false);
-                    fulfill(true);
-                });
+                        }));
+                    });
+                    Promise.all(promises).then(function () {
+                        that.saveFile(id, set);
+                        if (set.data.length == 0)
+                            fulfill(false);
+                        fulfill(true);
+                    });
+                }
             }).catch(function (err: Error) {
                 reject(err);
             });

@@ -142,7 +142,7 @@ describe("InsightFacadeSpec", function () {
             expect.fail();
         }).catch(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(424);
+            expect(inr.code).to.equal(400);
         });
     });
 
@@ -178,9 +178,11 @@ describe("InsightFacadeSpec", function () {
             expect.fail();
         }).catch(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(424);
+            expect(inr.code).to.equal(400);
         });
     });
+
+
 
     it("removeDataset courses", function () {
         return inf.removeDataset('courses').then(function (inr: InsightResponse) {

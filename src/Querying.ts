@@ -166,7 +166,7 @@ export default class Querying {
                     reject(new Error("Invalid LT"));
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
-                        reject(new Error(key));
+                        reject(new Error(key+"not present in data"));
                     if (obj[key] < bound)
                         set.add(obj);
                 }
