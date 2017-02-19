@@ -80,11 +80,11 @@ export default class Querying {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
+            if (and.length == 0)
+                reject(new Error("Empty AND"));
             for (let q of and) {
                 pr.push(that.getWhere(q));
             }
-            if (pr.length == 0)
-                reject(new Error("Empty AND"));
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
                     let data1: any[] = set[0].data;
@@ -104,11 +104,11 @@ export default class Querying {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
+            if (or.length == 0)
+                reject(new Error("Empty OR"));
             for (let q of or) {
                 pr.push(that.getWhere(q));
             }
-            if (pr.length == 0)
-                reject(new Error("Empty OR"));
             Promise.all(pr).then(function (set: Dataset[]) {
                 if(set.length == 2) {
                     let data1: any[] = set[0].data;
