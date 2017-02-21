@@ -1,4 +1,5 @@
 import Dataset from "./Dataset";
+import {Struct} from "./controller/InsightFacade";
 /**
  * Created by jaysinghchauhan on 2/6/17.
  */
@@ -29,9 +30,11 @@ export interface QueryResponse {
 
 export default class Querying {
     public dataSet: Dataset;
+    public id: string;
 
-    constructor(data: Dataset) {
-        this.dataSet = data;
+    constructor(data: Struct, id: string) {
+        this.dataSet = data[id];
+        this.id = id;
     }
 
     getWhere(where: Where): Promise<Dataset> {
@@ -129,17 +132,22 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 let set = new Dataset();
-                let data = that.dataSet.data;
                 let keys = Object.keys(gt);
                 if(keys.length != 1)
                     reject(new Error("Invalid GT"));
+                let data: any[];
                 let key = keys[0];
+                let id = key.split('_')[0];
+                if (id != that.id)
+                    reject({missing: id});
+                else
+                    data = that.dataSet.data;
                 let bound = gt[key];
-                if (typeof bound != 'number')
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid GT"));
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
-                        reject(new Error(key));
+                        reject(new Error("Invalid GT key"));
                     if (obj[key] > bound)
                         set.add(obj);
                 }
@@ -156,17 +164,22 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 let set = new Dataset();
-                let data = that.dataSet.data;
                 let keys = Object.keys(lt);
                 if(keys.length != 1)
                     reject(new Error("Invalid LT"));
                 let key = keys[0];
                 let bound = lt[key];
-                if (typeof bound != 'number')
+                let data: any[];
+                let id = key.split('_')[0];
+                if (id != that.id)
+                    reject({missing: id});
+                else
+                    data = that.dataSet.data;
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid LT"));
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
-                        reject(new Error(key+"not present in data"));
+                        reject(new Error("Invalid LT key"));
                     if (obj[key] < bound)
                         set.add(obj);
                 }
@@ -183,17 +196,22 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 let set = new Dataset();
-                let data = that.dataSet.data;
                 let keys = Object.keys(eq);
                 if(keys.length != 1)
                     reject(new Error("Invalid EQ"));
                 let key = keys[0];
                 let bound = eq[key];
-                if (typeof bound != 'number')
+                let data: any[];
+                let id = key.split('_')[0];
+                if (id != that.id)
+                    reject({missing: id});
+                else
+                    data = that.dataSet.data;
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid EQ"));
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
-                        reject(new Error(key));
+                        reject(new Error("Invalid EQ key"));
                     if (obj[key] == bound)
                         set.add(obj);
                 }
@@ -210,17 +228,22 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 let set = new Dataset();
-                let data = that.dataSet.data;
                 let keys = Object.keys(is);
                 if(keys.length != 1)
                     reject(new Error("Invalid IS"));
                 let key = keys[0];
                 let val = is[key];
-                if (typeof val != 'string')
+                let id = key.split('_')[0];
+                let data: any[];
+                if (id != that.id)
+                    reject({missing: id});
+                else
+                    data = that.dataSet.data;
+                if (typeof val !== 'string')
                     reject(new Error("Invalid IS"));
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
-                        reject(new Error(key));
+                        reject(new Error("Invalid IS key"));
                     if (obj[key].includes(val))
                         set.add(obj);
                 }
@@ -233,16 +256,12 @@ export default class Querying {
     }
 
     union(d1: any[], d2:any[]): any[] {
-        let d: any[] = [];
         for (let obj of d1) {
             if (!d2.includes(obj)) {
-                d.push(obj);
+                d2.push(obj);
             }
         }
-        for (let obj of d2) {
-            d.push(obj);
-        }
-        return d;
+        return d2;
     }
 
     intersection(d1: any[], d2: any[]): any[] {

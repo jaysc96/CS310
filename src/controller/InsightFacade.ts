@@ -59,11 +59,10 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             let where = query.WHERE;
             let options = query.OPTIONS;
-            let key = options.ORDER.split('_');
-            if(!that.dataStruct.hasOwnProperty(key[0]))
-                reject({code: 424, body: {missing: key[0]}});
-            let dset = that.dataStruct[key[0]];
-            let qr = new Querying(dset);
+            let key = options.ORDER.split('_')[0];
+            if(!that.dataStruct.hasOwnProperty(key))
+                reject({code: 424, body: {missing: key}});
+            let qr = new Querying(that.dataStruct, key);
             qr.getWhere(where).then(function (set) {
                 that.renderOptions(options, set).then(function (qr) {
                     let render = qr.render;
@@ -89,6 +88,8 @@ export default class InsightFacade implements IInsightFacade {
                     reject(new Error ("Empty COLUMNS"));
                 if (!set.data[0].hasOwnProperty(order))
                     reject(new Error ("Invalid ORDER"));
+                if (!columns.includes(order))
+                    reject(new Error ("ORDER should be present in COLUMNS"));
                 set.data.sort(function (a, b) {
                     return a[order] - b[order];
                 });
@@ -125,7 +126,12 @@ export default class InsightFacade implements IInsightFacade {
             let promises: Promise<any>[] = [];
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
-                if(id == 'courses') {
+                if(zip.file("index.htm")!==null) {
+                    zip.file("index.htm").async('string').then(function (file) {
+                        fulfill(true);
+                    })
+                }
+                else {
                     zip.folder(id).forEach(function (relativePath, file) {
                         promises.push(file.async('string').then(JSON.parse).then(function (obj) {
                             for (let res of obj.result) {

@@ -6,7 +6,7 @@ import Log from "../src/Util";
 import {InsightResponse, QueryRequest} from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
 
-describe("InsightFacadeSpec", function () {
+describe("CoursesSpec", function () {
     let fs = require("fs");
     let inf: InsightFacade;
 
