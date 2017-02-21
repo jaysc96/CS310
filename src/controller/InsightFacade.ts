@@ -85,7 +85,6 @@ export default class InsightFacade implements IInsightFacade {
                 let columns = opt.COLUMNS;
                 let order = opt.ORDER;
                 let form = opt.FORM;
-                let err = "missing: ";
                 if (columns.length == 0)
                     reject(new Error ("Empty COLUMNS"));
                 if (!set.data[0].hasOwnProperty(order))
@@ -96,25 +95,16 @@ export default class InsightFacade implements IInsightFacade {
                 if (form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
-                    let flag = 0;
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
                             if(data.hasOwnProperty(col))
                                 c[col] = data[col];
-                            else {
-                                if (flag == 1)
-                                    err += ", ";
-                                err += col;
-                                flag = 1;
-                            }
+                            else
+                                reject(new Error("Invalid COLUMNS"));
                         }
-                        if (flag == 1)
-                            break;
                         result.push(c);
                     }
-                    if (flag == 1)
-                        reject(err);
                     let qr: QueryResponse = {render: render, result: result};
                     fulfill(qr);
                 }

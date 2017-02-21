@@ -7,19 +7,19 @@ export interface Query {
 }
 
 export interface Where {
-    "AND"?: Where[],
-    "OR"?: Where[],
-    "GT"?: Query,
-    "LT"?: Query,
-    "EQ"?: Query,
-    "IS"?: Query,
-    "NOT"?: Where
+    AND?: Where[],
+    OR?: Where[],
+    GT?: Query,
+    LT?: Query,
+    EQ?: Query,
+    IS?: Query,
+    NOT?: Where
 }
 
 export interface Options {
-    "COLUMNS": string[],
-    "ORDER": string,
-    "FORM": string
+    COLUMNS: string[],
+    ORDER: string,
+    FORM: string
 }
 
 export interface QueryResponse {
