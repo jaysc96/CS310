@@ -6,7 +6,6 @@ import Log from "../Util";
 import Dataset from "../Dataset";
 import Querying from "../Querying";
 import {QueryResponse, Options} from "../Querying";
-import {Where} from "../Querying";
 
 export interface Struct {
     [id: string]: Dataset
@@ -70,11 +69,13 @@ export default class InsightFacade implements IInsightFacade {
                     let result = qr.result;
                     fulfill({code: 200, body: {render, result}});
                 }).catch(function (err) {
+                    if(err.hasOwnProperty("missing"))
+                        reject({code: 424, body: err});
                     reject({code: 400, body: {error: err.message}})
                 })
             }).catch(function (err) {
                 if(err.hasOwnProperty("missing"))
-                    reject({code: 424, body: {error: err}});
+                    reject({code: 424, body: err});
                 reject({code: 400, body: {error: err.message}});
             });
         });
@@ -154,27 +155,33 @@ export default class InsightFacade implements IInsightFacade {
                 let form = opt.FORM;
                 if (columns.length == 0)
                     reject(new Error ("Empty COLUMNS"));
-                if (!set.data[0].hasOwnProperty(order))
-                    reject(new Error ("Invalid ORDER"));
-                if (!columns.includes(order))
+                else if (!columns.includes(order))
                     reject(new Error ("ORDER should be present in COLUMNS"));
+                else if(set.data.length == 0)
+                    fulfill({render: form, result: []});
+                else if (!set.data[0].hasOwnProperty(order))
+                    reject(new Error ("Invalid ORDER"));
                 set.data.sort(function (a, b) {
                     return a[order] - b[order];
                 });
                 if (form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
-                    let err: {missing: string[]};
+                    let err: {missing: string[]} = {missing: []};
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
                             let key = col.split('_')[0];
                             if(!that.dataStruct.hasOwnProperty(key))
                                 err.missing.push(key);
-                            if(data.hasOwnProperty(col))
+                            else if(data.hasOwnProperty(col))
                                 c[col] = data[col];
                             else
                                 reject(new Error("Invalid COLUMNS"));
+                        }
+                        if(err.missing.length != 0) {
+                            reject(err);
+                            break;
                         }
                         result.push(c);
                     }

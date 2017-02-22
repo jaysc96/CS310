@@ -105,7 +105,43 @@ describe("CoursesSpec", function () {
             Log.test(JSON.stringify(inr));
             expect(inr.code).to.equal(200);
         }).catch(function (inr: InsightResponse) {
-            Log.error(JSON.stringify(inr.body));
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        });
+    });
+
+    it('perform another complex query', function () {
+        let query = {
+            "WHERE":{
+                        "AND":[
+                            {
+                                "GT":{
+                                    "courses_avg":70
+                                }
+                            },
+                            {
+                                "LT":{
+                                    "courses_avg":80
+                                }
+                            }
+                        ]
+            },
+            "OPTIONS":{
+                "COLUMNS":[
+                    "courses_dept",
+                    "courses_id",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
+                "ORDER":"courses_avg",
+                "FORM":"TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
             expect.fail();
         });
     });

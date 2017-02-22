@@ -45,48 +45,50 @@ export default class Querying {
             try {
                 if (where.hasOwnProperty("AND")) {
                     that.filterAND(where.AND).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("OR")) {
                     that.filterOR(where.OR).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("GT")) {
                     that.filterGT(where.GT).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("LT")) {
                     that.filterLT(where.LT).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("EQ")) {
                     that.filterEQ(where.EQ).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("IS")) {
                     that.filterIS(where.IS).then(function(dset) {
-                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                        if (that.err.missing.length != 0)
                             reject(that.err);
                         fulfill(dset);
                     }).catch(reject);
                 }
                 else if (where.hasOwnProperty("NOT")) {
                     that.getWhere(where.NOT).then(function (dset) {
+                        if (that.err.missing.length != 0)
+                            reject(that.err);
                         let set = new Dataset();
                         set.data = that.dataSet.data;
                         dset.data = that.negation(dset.data, set.data);
@@ -289,7 +291,7 @@ export default class Querying {
         });
     }
 
-    union(d1: any[], d2:any[]): any[] {
+    union(d1: any[], d2: any[]): any[] {
         for (let obj of d1) {
             if (!d2.includes(obj)) {
                 d2.push(obj);
@@ -299,13 +301,7 @@ export default class Querying {
     }
 
     intersection(d1: any[], d2: any[]): any[] {
-        let d: any[] = [];
-        for (let obj of d1) {
-            if (d2.includes(obj)) {
-                d.push(obj);
-            }
-        }
-        return d;
+        return d1.filter(x => d2.indexOf(x) !== -1);
     }
 
     negation(d: any[], universal: any[]): any[] {
@@ -316,8 +312,6 @@ export default class Querying {
             });
             D.splice(ind, 1);
         }
-        if (D.length == 0)
-            throw new Error("No dataset present");
         return D;
     }
 }
