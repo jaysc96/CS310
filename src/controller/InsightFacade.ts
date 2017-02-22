@@ -6,6 +6,7 @@ import Log from "../Util";
 import Dataset from "../Dataset";
 import Querying from "../Querying";
 import {QueryResponse, Options} from "../Querying";
+import {Where} from "../Querying";
 
 export interface Struct {
     [id: string]: Dataset
@@ -61,7 +62,7 @@ export default class InsightFacade implements IInsightFacade {
             let options = query.OPTIONS;
             let key = options.ORDER.split('_')[0];
             if(!that.dataStruct.hasOwnProperty(key))
-                reject({code: 424, body: {missing: key}});
+                reject({code: 400, body: {error: "Invalid Query"}});
             let qr = new Querying(that.dataStruct, key);
             qr.getWhere(where).then(function (set) {
                 that.renderOptions(options, set).then(function (qr) {
@@ -72,50 +73,11 @@ export default class InsightFacade implements IInsightFacade {
                     reject({code: 400, body: {error: err.message}})
                 })
             }).catch(function (err) {
+                if(err.hasOwnProperty("missing"))
+                    reject({code: 424, body: {error: err}});
                 reject({code: 400, body: {error: err.message}});
             });
         });
-    }
-
-    renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
-        let that = this;
-        return new Promise(function (fulfill, reject) {
-            try {
-                let columns = opt.COLUMNS;
-                let order = opt.ORDER;
-                let form = opt.FORM;
-                if (columns.length == 0)
-                    reject(new Error ("Empty COLUMNS"));
-                if (!set.data[0].hasOwnProperty(order))
-                    reject(new Error ("Invalid ORDER"));
-                if (!columns.includes(order))
-                    reject(new Error ("ORDER should be present in COLUMNS"));
-                set.data.sort(function (a, b) {
-                    return a[order] - b[order];
-                });
-                if (form == "TABLE") {
-                    let render = form;
-                    let result: any[] = [];
-                    for (let data of set.data) {
-                        let c: any = {};
-                        for (let col of columns) {
-                            if(data.hasOwnProperty(col))
-                                c[col] = data[col];
-                            else
-                                reject(new Error("Invalid COLUMNS"));
-                        }
-                        result.push(c);
-                    }
-                    let qr: QueryResponse = {render: render, result: result};
-                    fulfill(qr);
-                }
-                else
-                    reject(new Error("Invalid FORM"));
-            }
-            catch (err) {
-                reject(err);
-            }
-        })
     }
 
     processDataset(id: string, content: string): Promise <boolean> {
@@ -181,5 +143,50 @@ export default class InsightFacade implements IInsightFacade {
     removeFile(id: string) {
         let fs = require('fs');
         fs.unlinkSync('./data/' + id + ".json");
+    }
+
+    renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            try {
+                let columns = opt.COLUMNS;
+                let order = opt.ORDER;
+                let form = opt.FORM;
+                if (columns.length == 0)
+                    reject(new Error ("Empty COLUMNS"));
+                if (!set.data[0].hasOwnProperty(order))
+                    reject(new Error ("Invalid ORDER"));
+                if (!columns.includes(order))
+                    reject(new Error ("ORDER should be present in COLUMNS"));
+                set.data.sort(function (a, b) {
+                    return a[order] - b[order];
+                });
+                if (form == "TABLE") {
+                    let render = form;
+                    let result: any[] = [];
+                    let err: {missing: string[]};
+                    for (let data of set.data) {
+                        let c: any = {};
+                        for (let col of columns) {
+                            let key = col.split('_')[0];
+                            if(!that.dataStruct.hasOwnProperty(key))
+                                err.missing.push(key);
+                            if(data.hasOwnProperty(col))
+                                c[col] = data[col];
+                            else
+                                reject(new Error("Invalid COLUMNS"));
+                        }
+                        result.push(c);
+                    }
+                    let qr: QueryResponse = {render: render, result: result};
+                    fulfill(qr);
+                }
+                else
+                    reject(new Error("Invalid FORM"));
+            }
+            catch (err) {
+                reject(err);
+            }
+        })
     }
 }

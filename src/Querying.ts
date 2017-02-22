@@ -31,10 +31,12 @@ export interface QueryResponse {
 export default class Querying {
     public dataSet: Dataset;
     public id: string;
+    public err: any;
 
     constructor(data: Struct, id: string) {
         this.dataSet = data[id];
         this.id = id;
+        this.err = {missing: []};
     }
 
     getWhere(where: Where): Promise<Dataset> {
@@ -42,22 +44,46 @@ export default class Querying {
         return new Promise(function (fulfill, reject) {
             try {
                 if (where.hasOwnProperty("AND")) {
-                    that.filterAND(where.AND).then(fulfill).catch(reject);
+                    that.filterAND(where.AND).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("OR")) {
-                    that.filterOR(where.OR).then(fulfill).catch(reject);
+                    that.filterOR(where.OR).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("GT")) {
-                    that.filterGT(where.GT).then(fulfill).catch(reject);
+                    that.filterGT(where.GT).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("LT")) {
-                    that.filterLT(where.LT).then(fulfill).catch(reject);
+                    that.filterLT(where.LT).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("EQ")) {
-                    that.filterEQ(where.EQ).then(fulfill).catch(reject);
+                    that.filterEQ(where.EQ).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("IS")) {
-                    that.filterIS(where.IS).then(fulfill).catch(reject);
+                    that.filterIS(where.IS).then(function(dset) {
+                        if (that.err.hasOwnProperty("missing") && that.err.missing.length != 0)
+                            reject(that.err);
+                        fulfill(dset);
+                    }).catch(reject);
                 }
                 else if (where.hasOwnProperty("NOT")) {
                     that.getWhere(where.NOT).then(function (dset) {
@@ -138,8 +164,10 @@ export default class Querying {
                 let data: any[];
                 let key = keys[0];
                 let id = key.split('_')[0];
-                if (id != that.id)
-                    reject({missing: id});
+                if (id != that.id) {
+                    that.err.missing.push(id);
+                    reject(that.err);
+                }
                 else
                     data = that.dataSet.data;
                 let bound = gt[key];
@@ -171,8 +199,10 @@ export default class Querying {
                 let bound = lt[key];
                 let data: any[];
                 let id = key.split('_')[0];
-                if (id != that.id)
-                    reject({missing: id});
+                if (id != that.id) {
+                    that.err.missing.push(id);
+                    reject(that.err);
+                }
                 else
                     data = that.dataSet.data;
                 if (typeof bound !== 'number')
@@ -203,8 +233,10 @@ export default class Querying {
                 let bound = eq[key];
                 let data: any[];
                 let id = key.split('_')[0];
-                if (id != that.id)
-                    reject({missing: id});
+                if (id != that.id){
+                    that.err.missing.push(id);
+                    reject(that.err);
+                }
                 else
                     data = that.dataSet.data;
                 if (typeof bound !== 'number')
@@ -235,8 +267,10 @@ export default class Querying {
                 let val = is[key];
                 let id = key.split('_')[0];
                 let data: any[];
-                if (id != that.id)
-                    reject({missing: id});
+                if (id != that.id){
+                    that.err.missing.push(id);
+                    reject(that.err);
+                }
                 else
                     data = that.dataSet.data;
                 if (typeof val !== 'string')
