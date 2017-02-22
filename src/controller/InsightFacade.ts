@@ -6,6 +6,7 @@ import Log from "../Util";
 import Dataset from "../Dataset";
 import Querying from "../Querying";
 import {QueryResponse, Options} from "../Querying";
+import {Where} from "../Querying";
 
 export interface Struct {
     [id: string]: Dataset
@@ -57,27 +58,33 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let where = query.WHERE;
-            let options = query.OPTIONS;
-            let key = options.ORDER.split('_')[0];
-            if(!that.dataStruct.hasOwnProperty(key))
-                reject({code: 400, body: {error: "Invalid Query"}});
-            let qr = new Querying(that.dataStruct, key);
-            qr.getWhere(where).then(function (set) {
-                that.renderOptions(options, set).then(function (qr) {
-                    let render = qr.render;
-                    let result = qr.result;
-                    fulfill({code: 200, body: {render, result}});
+            try {
+                let where: Where = query.WHERE;
+                let options: Options = query.OPTIONS;
+                let key = options.ORDER.split('_')[0];
+                if (!that.dataStruct.hasOwnProperty(key))
+                    reject({code: 400, body: {error: "Invalid Query"}});
+                let qr = new Querying(that.dataStruct, key);
+                qr.getWhere(where).then(function (set) {
+                    that.renderOptions(options, set).then(function (qr) {
+                        let render = qr.render;
+                        let result = qr.result;
+                        fulfill({code: 200, body: {render, result}});
+                    }).catch(function (err) {
+                        if (err.hasOwnProperty("missing"))
+                            reject({code: 424, body: err});
+                        reject({code: 400, body: {error: err.message}})
+                    })
                 }).catch(function (err) {
-                    if(err.hasOwnProperty("missing"))
+                    if (err.hasOwnProperty("missing"))
                         reject({code: 424, body: err});
-                    reject({code: 400, body: {error: err.message}})
-                })
-            }).catch(function (err) {
-                if(err.hasOwnProperty("missing"))
-                    reject({code: 424, body: err});
+                    reject({code: 400, body: {error: err.message}});
+                });
+            }
+            catch(err) {
+                console.log(0);
                 reject({code: 400, body: {error: err.message}});
-            });
+            }
         });
     }
 

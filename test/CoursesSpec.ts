@@ -218,7 +218,29 @@ describe("CoursesSpec", function () {
         });
     });
 
-
+    it("do not perform invalid query", function () {
+        let query = {
+            "WHERE":{
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_sys",
+                    "courses_avg",
+                    "courses_uuid"
+                ],
+                "ORDER": "courses_avg",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(400);
+        });
+    });
 
     it("removeDataset courses", function () {
         return inf.removeDataset('courses').then(function (inr: InsightResponse) {
