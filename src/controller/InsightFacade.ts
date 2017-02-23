@@ -7,6 +7,8 @@ import Dataset from "../Dataset";
 import Querying from "../Querying";
 import {QueryResponse, Options} from "../Querying";
 import {Where} from "../Querying";
+//import {ASTNode} from "parse5";
+let parse5 = require('parse5');
 
 export interface Struct {
     [id: string]: Dataset
@@ -97,7 +99,17 @@ export default class InsightFacade implements IInsightFacade {
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
                 if(zip.file("index.htm") !== null) {
                     zip.file("index.htm").async('string').then(function (file) {
-                        console.log(file);
+                        let i = file.indexOf("<tbody>");
+                        let j = file.indexOf("</tbody>");
+                        let tbody = parse5.parseFragment(file.substring(i,j)).childNodes[0];
+                        let rooms: any[] = [];
+                        tbody.childNodes.forEach(function (node: Node) {
+                            if(node.nodeName == 'tr') {
+                                let room: any = {};
+                                room = that.processNode(node, id, room);
+                                rooms.push(room);
+                            }
+                        });
                         fulfill(true);
                     })
                 }
@@ -133,6 +145,17 @@ export default class InsightFacade implements IInsightFacade {
                 reject(err);
             });
         });
+    }
+
+    private processNode(node: Node, id: string, room: any): any {
+        if(node.childNodes) {
+            /*
+            node.childNodes.forEach(function (n) {
+                this.processNode(n, id, room);
+            })
+            */
+        }
+        return room;
     }
 
     private saveFile(id: string, set: Dataset) {
