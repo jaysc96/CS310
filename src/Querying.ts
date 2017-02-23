@@ -266,7 +266,7 @@ export default class Querying {
                 if(keys.length != 1)
                     reject(new Error("Invalid IS"));
                 let key = keys[0];
-                let val = is[key];
+                let val = is[key].toUpperCase();
                 let id = key.split('_')[0];
                 let data: any[];
                 if (id != that.id){
@@ -280,8 +280,18 @@ export default class Querying {
                 for (let obj of data) {
                     if (!obj.hasOwnProperty(key))
                         reject(new Error("Invalid IS key"));
-                    if (obj[key].includes(val))
+                    let o = obj[key].toUpperCase();
+                    if(o.includes(val))
                         set.add(obj);
+                    else {
+                        let vals = val.split(" ");
+                        for (let v of vals) {
+                            if (o.includes(v)) {
+                                set.add(obj);
+                                break;
+                            }
+                        }
+                    }
                 }
                 fulfill(set);
             }
