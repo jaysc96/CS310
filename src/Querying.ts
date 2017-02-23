@@ -39,7 +39,7 @@ export default class Querying {
         this.err = {missing: []};
     }
 
-    getWhere(where: Where): Promise<Dataset> {
+    public getWhere(where: Where): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -107,7 +107,7 @@ export default class Querying {
         });
     }
 
-    filterAND(and: Where[]): Promise<Dataset> {
+    private filterAND(and: Where[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
@@ -131,7 +131,7 @@ export default class Querying {
         });
     }
 
-    filterOR(or: Where[]): Promise<Dataset> {
+    private filterOR(or: Where[]): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let pr: Promise<Dataset>[] = [];
@@ -155,7 +155,7 @@ export default class Querying {
         });
     }
 
-    filterGT(gt: Query): Promise<Dataset> {
+    private filterGT(gt: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -189,7 +189,7 @@ export default class Querying {
         });
     }
 
-    filterLT(lt: Query): Promise<Dataset> {
+    private filterLT(lt: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -223,7 +223,7 @@ export default class Querying {
         });
     }
 
-    filterEQ(eq: Query): Promise<Dataset> {
+    private filterEQ(eq: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -257,7 +257,7 @@ export default class Querying {
         });
     }
 
-    filterIS(is: Query): Promise<Dataset> {
+    private filterIS(is: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -301,7 +301,7 @@ export default class Querying {
         });
     }
 
-    union(d1: any[], d2: any[]): any[] {
+    private union(d1: any[], d2: any[]): any[] {
         for (let obj of d1) {
             if (!d2.includes(obj)) {
                 d2.push(obj);
@@ -310,11 +310,11 @@ export default class Querying {
         return d2;
     }
 
-    intersection(d1: any[], d2: any[]): any[] {
+    private intersection(d1: any[], d2: any[]): any[] {
         return d1.filter(x => d2.indexOf(x) !== -1);
     }
 
-    negation(d: any[], universal: any[]): any[] {
+    private negation(d: any[], universal: any[]): any[] {
         let D = universal.slice();
         for (let obj of d) {
             let ind = D.findIndex(function (element) {

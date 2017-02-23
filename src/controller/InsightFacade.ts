@@ -19,7 +19,7 @@ export default class InsightFacade implements IInsightFacade {
         Log.trace('InsightFacadeImpl::init()');
     }
 
-    addDataset(id: string, content: string): Promise<InsightResponse> {
+    public addDataset(id: string, content: string): Promise<InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             let flag = 0;
@@ -42,7 +42,7 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    removeDataset(id: string): Promise<InsightResponse> {
+    public removeDataset(id: string): Promise<InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             if (that.dataStruct.hasOwnProperty(id)) {
@@ -55,7 +55,7 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    performQuery(query: QueryRequest): Promise <InsightResponse> {
+    public performQuery(query: QueryRequest): Promise <InsightResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
@@ -87,7 +87,7 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    processDataset(id: string, content: string): Promise <boolean> {
+    private processDataset(id: string, content: string): Promise <boolean> {
         let that = this;
         let set = new Dataset();
         return new Promise(function (fulfill, reject) {
@@ -95,8 +95,9 @@ export default class InsightFacade implements IInsightFacade {
             let promises: Promise<any>[] = [];
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
-                if(zip.file("index.htm")!==null) {
+                if(zip.file("index.htm") !== null) {
                     zip.file("index.htm").async('string').then(function (file) {
+                        console.log(file);
                         fulfill(true);
                     })
                 }
@@ -115,6 +116,7 @@ export default class InsightFacade implements IInsightFacade {
                                     c[id + '_pass'] = res.Pass;
                                     c[id + '_fail'] = res.Fail;
                                     c[id + '_audit'] = res.Audit;
+                                    c[id + '_years'] = res.Section == "overall" ? 1900 : res.Year;
                                     set.add(c);
                                 }
                             }
@@ -133,7 +135,7 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    saveFile(id: string, set: Dataset) {
+    private saveFile(id: string, set: Dataset) {
         let fs = require('fs');
         this.dataStruct[id] = set;
         let s = JSON.stringify(this.dataStruct[id].data);
@@ -147,12 +149,12 @@ export default class InsightFacade implements IInsightFacade {
         fs.writeFileSync("./data/" + id + ".json", s);
     }
 
-    removeFile(id: string) {
+    private removeFile(id: string) {
         let fs = require('fs');
         fs.unlinkSync('./data/' + id + ".json");
     }
 
-    renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
+    private renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
