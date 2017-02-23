@@ -63,7 +63,7 @@ export default class InsightFacade implements IInsightFacade {
                 let options: Options = query.OPTIONS;
                 let key = options.ORDER.split('_')[0];
                 if (!that.dataStruct.hasOwnProperty(key))
-                    reject({code: 400, body: {error: "Invalid Query"}});
+                    reject({code: 424, body: {missing: [key]}});
                 let qr = new Querying(that.dataStruct, key);
                 qr.getWhere(where).then(function (set) {
                     that.renderOptions(options, set).then(function (qr) {
@@ -82,7 +82,6 @@ export default class InsightFacade implements IInsightFacade {
                 });
             }
             catch(err) {
-                console.log(0);
                 reject({code: 400, body: {error: err.message}});
             }
         });
@@ -162,9 +161,20 @@ export default class InsightFacade implements IInsightFacade {
                 let form = opt.FORM;
                 if (columns.length == 0)
                     reject(new Error ("Empty COLUMNS"));
-                else if (!columns.includes(order))
+                else {
+                    let err: {missing: string[]} = {missing: []};
+                    for (let col of columns) {
+                        let key = col.split('_')[0];
+                        if(!that.dataStruct.hasOwnProperty(key))
+                            err.missing.push(key);
+                    }
+                    if(err.missing.length > 0) {
+                        reject(err);
+                    }
+                }
+                if (!columns.includes(order))
                     reject(new Error ("ORDER should be present in COLUMNS"));
-                else if(set.data.length == 0)
+                if(set.data.length == 0)
                     fulfill({render: form, result: []});
                 else if (!set.data[0].hasOwnProperty(order))
                     reject(new Error ("Invalid ORDER"));
@@ -174,21 +184,13 @@ export default class InsightFacade implements IInsightFacade {
                 if (form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
-                    let err: {missing: string[]} = {missing: []};
                     for (let data of set.data) {
                         let c: any = {};
                         for (let col of columns) {
-                            let key = col.split('_')[0];
-                            if(!that.dataStruct.hasOwnProperty(key))
-                                err.missing.push(key);
-                            else if(data.hasOwnProperty(col))
+                            if(data.hasOwnProperty(col))
                                 c[col] = data[col];
                             else
                                 reject(new Error("Invalid COLUMNS"));
-                        }
-                        if(err.missing.length != 0) {
-                            reject(err);
-                            break;
                         }
                         result.push(c);
                     }
