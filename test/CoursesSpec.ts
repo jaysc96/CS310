@@ -73,12 +73,12 @@ describe("CoursesSpec", function () {
                         "AND":[
                             {
                                 "GT":{
-                                    "courses_avg":90
+                                    "courses_avg":60
                                 }
                             },
                             {
                                 "IS":{
-                                    "courses_dept":"adhe"
+                                    "courses_instructor":"sarah"
                                 }
                             }
                         ]
@@ -95,7 +95,7 @@ describe("CoursesSpec", function () {
                     "courses_dept",
                     "courses_id",
                     "courses_avg",
-                    "courses_uuid"
+                    "courses_instructor"
                 ],
                 "ORDER":"courses_avg",
                 "FORM":"TABLE"
@@ -109,23 +109,21 @@ describe("CoursesSpec", function () {
             expect.fail();
         });
     });
-
+/*
     it('perform another complex query', function () {
         let query = {
             "WHERE":{
-                        "AND":[
-                            {
-                                "GT":{
-                                    "courses_avg":70
-                                }
-                            },
-                            {
-                                "LT":{
-                                    "courses_avg":80
-                                }
-                            }
-                        ]
-            },
+                "AND": [{
+                    "GT": {
+                        "courses_avg": 70
+                    }
+                },
+                    {
+                        "LT": {
+                            "courses_avg": 80
+                        }
+                    }]
+                },
             "OPTIONS":{
                 "COLUMNS":[
                     "courses_dept",
@@ -145,7 +143,7 @@ describe("CoursesSpec", function () {
             expect.fail();
         });
     });
-
+*/
     it("do not perform invalid 'WHERE' query", function () {
         let query = {
             "WHERE":{

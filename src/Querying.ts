@@ -263,42 +263,82 @@ export default class Querying {
             try {
                 let set = new Dataset();
                 let keys = Object.keys(is);
+
                 if(keys.length != 1)
                     reject(new Error("Invalid IS"));
+
                 let key = keys[0];
-                let val = is[key].toUpperCase();
+                let val = is[key];
                 let id = key.split('_')[0];
                 let data: any[];
+
                 if (id != that.id){
                     that.err.missing.push(id);
                     reject(that.err);
                 }
                 else
                     data = that.dataSet.data;
+
                 if (typeof val !== 'string')
                     reject(new Error("Invalid IS"));
-                for (let obj of data) {
-                    if (!obj.hasOwnProperty(key))
-                        reject(new Error("Invalid IS key"));
-                    let o = obj[key].toUpperCase();
-                    if(o.includes(val))
-                        set.add(obj);
-                    else {
-                        let vals = val.split(" ");
-                        for (let v of vals) {
-                            if (o.includes(v)) {
-                                set.add(obj);
-                                break;
-                            }
-                        }
+                else if(val.includes('*'))
+                    fulfill(that.filterPartial(is));
+                else {
+                    for (let obj of data) {
+                        if (!obj.hasOwnProperty(key))
+                            reject(new Error("Invalid IS key"));
+                        else if (obj[key].includes(val))
+                            set.add(obj);
                     }
+                    fulfill(set);
                 }
-                fulfill(set);
             }
             catch (err) {
                 reject(err);
             }
         });
+    }
+
+    private filterPartial(is: Query): Promise<Dataset> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let key = Object.keys(is)[0];
+            let str = is[key];
+            let data = that.dataSet.data;
+            let pos: string;
+            let set = new Dataset();
+
+            if(str.indexOf('*') == str.lastIndexOf('*')) {
+                if(str.indexOf('*') == 0) {
+                    str = str.splice(str.indexOf('*')+1);
+                    pos = 'front';
+                }
+                else {
+                    str = str.splice(0, str.indexOf('*'));
+                    pos = 'back';
+                }
+            }
+            else {
+                str = str.splice(str.indexOf('*')+1, str.lastIndexOf('*'));
+                pos = 'both';
+            }
+
+            for(let obj of data) {
+                if(obj[key].includes(str)) {
+                    if(pos == "front") {
+                        if(obj[key].indexOf(str) == 0)
+                            set.add(obj);
+                    }
+                    else if(pos == "back") {
+                        if(obj[key].indexOf(str) == (obj[key].length-str.length))
+                            set.add(obj);
+                    }
+                    else
+                        set.add(obj);
+                }
+            }
+            fulfill(set);
+        })
     }
 
     private union(d1: any[], d2: any[]): any[] {
