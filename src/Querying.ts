@@ -310,27 +310,27 @@ export default class Querying {
 
             if(str.indexOf('*') == str.lastIndexOf('*')) {
                 if(str.indexOf('*') == 0) {
-                    str = str.splice(str.indexOf('*')+1);
+                    str = str.substring(str.indexOf('*')+1);
                     pos = 'front';
                 }
                 else {
-                    str = str.splice(0, str.indexOf('*'));
+                    str = str.substring(0, str.indexOf('*'));
                     pos = 'back';
                 }
             }
             else {
-                str = str.splice(str.indexOf('*')+1, str.lastIndexOf('*'));
+                str = str.substring(str.indexOf('*')+1, str.lastIndexOf('*'));
                 pos = 'both';
             }
 
             for(let obj of data) {
                 if(obj[key].includes(str)) {
                     if(pos == "front") {
-                        if(obj[key].indexOf(str) == 0)
+                        if(obj[key].indexOf(str) == (obj[key].length-str.length))
                             set.add(obj);
                     }
                     else if(pos == "back") {
-                        if(obj[key].indexOf(str) == (obj[key].length-str.length))
+                        if(obj[key].indexOf(str) == 0)
                             set.add(obj);
                     }
                     else
