@@ -7,8 +7,9 @@ import Dataset from "../Dataset";
 import Querying from "../Querying";
 import {QueryResponse, Options} from "../Querying";
 import {Where} from "../Querying";
-//import {ASTNode} from "parse5";
+import {isUndefined} from "util";
 let parse5 = require('parse5');
+let http = require('http');
 
 export interface Struct {
     [id: string]: Dataset
@@ -91,33 +92,66 @@ export default class InsightFacade implements IInsightFacade {
 
     private processDataset(id: string, content: string): Promise <boolean> {
         let that = this;
-        let set = new Dataset();
         return new Promise(function (fulfill, reject) {
             let JSZip = require("jszip");
             let promises: Promise<any>[] = [];
+            let set = new Dataset();
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
                 if(zip.file("index.htm") !== null) {
                     zip.file("index.htm").async('string').then(function (file) {
                         let i = file.indexOf("<tbody>");
                         let j = file.indexOf("</tbody>");
-                        let tbody = parse5.parseFragment(file.substring(i,j)).childNodes[0];
-                        let rooms: any[] = [];
-                        tbody.childNodes.forEach(function (node: Node) {
+                        let body = parse5.parseFragment(file.substring(i,j)).childNodes[0];
+                        let bldgs: any[] = [];
+
+                        body.childNodes.forEach(function (node: any) {
                             if(node.nodeName == 'tr') {
-                                let room: any = {};
-                                room = that.processNode(node, id, room);
-                                rooms.push(room);
+                                let bldg: any = {};
+                                node.childNodes.forEach(function (cnode: any) {
+                                    if(cnode.nodeName == 'td')
+                                        Object.assign(bldg, that.processNode(cnode, id));
+                                });
+                                bldgs.push(bldg);
                             }
                         });
-                        fulfill(true);
+
+                        for(let bldg of bldgs) {
+                            promises.push(zip.file(bldg[id+'_href']).async('string').then(function (str) {
+                                let m = str.indexOf("<tbody>");
+                                let n = str.indexOf("</tbody>");
+                                let tbody = parse5.parseFragment(str.substring(m,n)).childNodes[0];
+                                if(!isUndefined(tbody)) {
+                                    tbody = tbody.childNodes[1].childNodes.forEach(function (node: any) {
+                                        if(node.nodeName == 'tr') {
+                                            node.childNodes.forEach(function (cnode: any) {
+                                                if(cnode.nodeName == 'td') {
+                                                    console.log(cnode);
+                                                }
+                                            })
+                                        }
+                                    });
+                                    console.log(tbody);
+                                }
+                            }).catch(function(err: Error) {
+                                reject(err);
+                            }));
+                        }
+
+                        Promise.all(promises).then(function () {
+                            set.add(bldgs);
+                            that.saveFile(id, set);
+                            fulfill(true);
+                        });
+                    }).catch(function (err) {
+                        reject(err);
                     })
                 }
                 else {
                     zip.folder(id).forEach(function (relativePath, file) {
                         promises.push(file.async('string').then(JSON.parse).then(function (obj) {
                             for (let res of obj.result) {
-                                if (res.hasOwnProperty("Course")) {
+                                if (res.Course) {
                                     let c: any = {};
                                     c[id + '_uuid'] = res.id;
                                     c[id + '_id'] = res.Course;
@@ -128,7 +162,7 @@ export default class InsightFacade implements IInsightFacade {
                                     c[id + '_pass'] = res.Pass;
                                     c[id + '_fail'] = res.Fail;
                                     c[id + '_audit'] = res.Audit;
-                                    c[id + '_years'] = res.Section == "overall" ? 1900 : res.Year;
+                                    c[id + '_year'] = res.Section == "overall" ? 1900 : res.Year;
                                     set.add(c);
                                 }
                             }
@@ -147,15 +181,25 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    private processNode(node: Node, id: string, room: any): any {
-        if(node.childNodes) {
-            /*
-            node.childNodes.forEach(function (n) {
-                this.processNode(n, id, room);
-            })
-            */
+    private processNode(node: any, id: string): any {
+        let r: any ={};
+        let str: string;
+        if(node.attrs[0].value == 'views-field views-field-field-building-code') {
+            str = node.childNodes[0].value;
+            r[id+'_shortname'] = str.substring(str.indexOf('\n')+2).trim();
         }
-        return room;
+        else if(node.attrs[0].value == 'views-field views-field-title') {
+            node = node.childNodes[1];
+            str = node.attrs[0].value;
+            r[id+'_href'] = str.substring(str.indexOf('./')+2);
+            //r[id+'_href'] = 'http://students.ubc.ca/'.concat(str);
+            r[id+'_fullname'] = node.childNodes[0].value;
+        }
+        else if(node.attrs[0].value == 'views-field views-field-field-building-address') {
+            str = node.childNodes[0].value;
+            r[id+'_address'] = str.substring(str.indexOf('\n')+2).trim();
+        }
+        return r;
     }
 
     private saveFile(id: string, set: Dataset) {
