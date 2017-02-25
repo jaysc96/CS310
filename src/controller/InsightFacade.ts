@@ -69,7 +69,8 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let where: Where = query.WHERE;
                 let options: Options = query.OPTIONS;
-                let key = options.ORDER.split('_')[0];
+
+                let key = options.COLUMNS[0].split('_')[0];
                 if (!that.dataStruct.hasOwnProperty(key))
                     reject({code: 424, body: {missing: [key]}});
                 let qr = new Querying(that.dataStruct, key);
@@ -339,12 +340,14 @@ export default class InsightFacade implements IInsightFacade {
                         reject(err);
                     }
                 }
-                if (!columns.includes(order))
-                    reject(new Error ("ORDER should be present in COLUMNS"));
+                if(order.trim().length > 0) {
+                    if (!columns.includes(order))
+                        reject(new Error("ORDER should be present in COLUMNS"));
+                    else if (!set.data[0].hasOwnProperty(order))
+                        reject(new Error("Invalid ORDER"));
+                }
                 if(set.data.length == 0)
                     fulfill({render: form, result: []});
-                else if (!set.data[0].hasOwnProperty(order))
-                    reject(new Error ("Invalid ORDER"));
                 set.data.sort(function (a, b) {
                     return a[order] - b[order];
                 });
