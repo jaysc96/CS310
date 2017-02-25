@@ -278,23 +278,23 @@ export default class InsightFacade implements IInsightFacade {
         else if(node.attrs[0].value == 'views-field views-field-field-room-number') {
             node = node.childNodes[1];
             if(node.attrs[0].name == 'href')
-                r[id+'_href'] = node.attrs[0].value;
-            r[id+'_number'] = node.childNodes[0].value;
+                r[id + '_href'] = node.attrs[0].value;
+            r[id + '_number'] = node.childNodes[0].value;
         }
 
         else if(node.attrs[0].value == 'views-field views-field-field-room-capacity') {
             str = node.childNodes[0].value;
-            r[id+'_seats'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_seats'] = str.substring(str.indexOf('\n')+2).trim();
         }
 
         else if(node.attrs[0].value == 'views-field views-field-field-room-furniture') {
             str = node.childNodes[0].value;
-            r[id+'_furniture'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_furniture'] = str.substring(str.indexOf('\n')+2).trim();
         }
 
         else if(node.attrs[0].value == 'views-field views-field-field-room-type') {
             str = node.childNodes[0].value;
-            r[id+'_type'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_type'] = str.substring(str.indexOf('\n')+2).trim();
         }
 
         return r;

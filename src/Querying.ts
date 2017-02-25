@@ -116,11 +116,12 @@ export default class Querying {
             for (let q of and) {
                 pr.push(that.getWhere(q));
             }
-            Promise.all(pr).then(function (set: Dataset[]) {
-                if(set.length == 2) {
-                    let data1: any[] = set[0].data;
-                    let data2: any[] = set[1].data;
-                    let data = that.intersection(data1, data2);
+            Promise.all(pr).then(function (sets: Dataset[]) {
+                if(sets.length == and.length) {
+                    let data: any[] = sets[0].data;
+                    for(let set of sets) {
+                        data = that.intersection(data, set.data)
+                    }
                     let dset = new Dataset();
                     dset.data = data;
                     fulfill(dset);
@@ -140,11 +141,12 @@ export default class Querying {
             for (let q of or) {
                 pr.push(that.getWhere(q));
             }
-            Promise.all(pr).then(function (set: Dataset[]) {
-                if(set.length == 2) {
-                    let data1: any[] = set[0].data;
-                    let data2: any[] = set[1].data;
-                    let data = that.union(data1, data2);
+            Promise.all(pr).then(function (sets: Dataset[]) {
+                if(sets.length == or.length) {
+                    let data: any[] = sets[0].data;
+                    for(let set of sets) {
+                        data = that.union(data, set.data);
+                    }
                     let dset = new Dataset();
                     dset.data = data;
                     fulfill(dset);
