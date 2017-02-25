@@ -325,8 +325,19 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             try {
                 let columns = opt.COLUMNS;
-                let order = opt.ORDER;
                 let form = opt.FORM;
+                let order: string;
+                if(opt.hasOwnProperty('ORDER')) {
+                    order = opt.ORDER;
+                    if (!columns.includes(order))
+                        reject(new Error("ORDER should be present in COLUMNS"));
+                    else if (!set.data[0].hasOwnProperty(order))
+                        reject(new Error("Invalid ORDER"));
+                    set.data.sort(function (a, b) {
+                        return a[order] - b[order];
+                    });
+                }
+
                 if (columns.length == 0)
                     reject(new Error ("Empty COLUMNS"));
                 else {
@@ -335,34 +346,28 @@ export default class InsightFacade implements IInsightFacade {
                         let key = col.split('_')[0];
                         if(!that.dataStruct.hasOwnProperty(key))
                             err.missing.push(key);
+                        else if(!that.dataStruct[key].data[10].hasOwnProperty(col))
+                            reject(new Error("Invalid COLUMNS"));
                     }
                     if(err.missing.length > 0) {
                         reject(err);
                     }
                 }
-                if(order.trim().length > 0) {
-                    if (!columns.includes(order))
-                        reject(new Error("ORDER should be present in COLUMNS"));
-                    else if (!set.data[0].hasOwnProperty(order))
-                        reject(new Error("Invalid ORDER"));
-                }
+
                 if(set.data.length == 0)
                     fulfill({render: form, result: []});
-                set.data.sort(function (a, b) {
-                    return a[order] - b[order];
-                });
-                if (form == "TABLE") {
+                
+                if(form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
-                    for (let data of set.data) {
+                    for(let data of set.data) {
                         let c: any = {};
-                        for (let col of columns) {
+                        for(let col of columns) {
                             if(data.hasOwnProperty(col))
                                 c[col] = data[col];
-                            else
-                                reject(new Error("Invalid COLUMNS"));
                         }
-                        result.push(c);
+                        if(Object.keys(c).length > 0)
+                            result.push(c);
                     }
                     let qr: QueryResponse = {render: render, result: result};
                     fulfill(qr);

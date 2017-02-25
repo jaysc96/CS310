@@ -114,7 +114,7 @@ describe("CoursesSpec", function () {
         let query = {
             "WHERE":{
                 "IS":{
-                    "courses_instructor":"alb*"
+                    "courses_instructor":"*alb*"
                 }
             },
             "OPTIONS":{

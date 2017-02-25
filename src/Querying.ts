@@ -19,7 +19,7 @@ export interface Where {
 
 export interface Options {
     COLUMNS: string[],
-    ORDER: string,
+    ORDER?: string,
     FORM: string
 }
 
@@ -312,6 +312,8 @@ export default class Querying {
 
             if(str.indexOf('*') == str.lastIndexOf('*')) {
                 if(str.indexOf('*') == 0) {
+                    if(str.length == 1)
+                        reject(new Error("Invalid IS"));
                     str = str.substring(str.indexOf('*')+1);
                     pos = 'front';
                 }
@@ -335,7 +337,7 @@ export default class Querying {
                         if(obj[key].indexOf(str) == 0)
                             set.add(obj);
                     }
-                    else
+                    else if(pos == "both")
                         set.add(obj);
                 }
             }
