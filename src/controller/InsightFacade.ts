@@ -9,10 +9,15 @@ import {QueryResponse, Options} from "../Querying";
 import {Where} from "../Querying";
 import {isUndefined} from "util";
 let parse5 = require('parse5');
-let http = require('http');
 
 export interface Struct {
     [id: string]: Dataset
+}
+
+export interface GeoResponse {
+    lat?: number;
+    lon?: number;
+    error?: string;
 }
 
 export default class InsightFacade implements IInsightFacade {
@@ -104,6 +109,7 @@ export default class InsightFacade implements IInsightFacade {
                         let j = file.indexOf("</tbody>");
                         let body = parse5.parseFragment(file.substring(i,j)).childNodes[0];
                         let bldgs: any[] = [];
+                        let rooms: any[] = [];
 
                         body.childNodes.forEach(function (node: any) {
                             if(node.nodeName == 'tr') {
@@ -112,36 +118,70 @@ export default class InsightFacade implements IInsightFacade {
                                     if(cnode.nodeName == 'td')
                                         Object.assign(bldg, that.processNode(cnode, id));
                                 });
-                                bldgs.push(bldg);
+                                if(bldg.hasOwnProperty(id + '_address')) {
+                                    promises.push(that.HttpGet(bldg, id).then((gr) => {
+                                        if(!gr.hasOwnProperty('error')) {
+                                            bldg[id + '_lat'] = gr.lat;
+                                            bldg[id + '_lon'] = gr.lon;
+                                        }
+                                        bldgs.push(bldg);
+                                    }).catch( (err: Error) => {
+                                        bldgs.push(bldg);
+                                    }));
+                                }
+                                else
+                                    bldgs.push(bldg);
                             }
                         });
 
-                        for(let bldg of bldgs) {
-                            promises.push(zip.file(bldg[id+'_href']).async('string').then(function (str) {
-                                let m = str.indexOf("<tbody>");
-                                let n = str.indexOf("</tbody>");
-                                let tbody = parse5.parseFragment(str.substring(m,n)).childNodes[0];
-                                if(!isUndefined(tbody)) {
-                                    tbody = tbody.childNodes[1].childNodes.forEach(function (node: any) {
-                                        if(node.nodeName == 'tr') {
-                                            node.childNodes.forEach(function (cnode: any) {
-                                                if(cnode.nodeName == 'td') {
-                                                    console.log(cnode);
-                                                }
-                                            })
-                                        }
-                                    });
-                                    console.log(tbody);
-                                }
-                            }).catch(function(err: Error) {
-                                reject(err);
-                            }));
-                        }
-
                         Promise.all(promises).then(function () {
-                            set.add(bldgs);
-                            that.saveFile(id, set);
-                            fulfill(true);
+                            let promises2: Promise<any>[] = [];
+                            for(let bldg of bldgs) {
+                                promises2.push(zip.file(bldg[id + '_href']).async('string').then(function (str) {
+                                    let m = str.indexOf("<tbody>");
+                                    let n = str.indexOf("</tbody>");
+                                    let tbody = parse5.parseFragment(str.substring(m,n)).childNodes[0];
+
+                                    if(!isUndefined(tbody)) {
+                                        tbody.childNodes.forEach(function (node: any) {
+                                            if(node.nodeName == 'tr') {
+                                                let room: any = {};
+                                                node.childNodes.forEach(function (cnode: any) {
+                                                    if (cnode.nodeName == 'td') {
+                                                        Object.assign(room, that.processNode(cnode, id));
+                                                    }
+                                                });
+
+
+                                                for(let key in bldg){
+                                                    if(key != id+'_href') {
+                                                        room[key] = bldg[key];
+                                                    }
+                                                }
+
+                                                if(room.hasOwnProperty(id + '_shortname') && room.hasOwnProperty(id + '_number')) {
+                                                    room[id+'_name'] = room[id + '_shortname']+'_'+room[id + '_number'];
+                                                }
+                                                rooms.push(room);
+                                            }
+                                        });
+                                    }
+                                    else
+                                        rooms.push(bldg);
+                                }).catch(function(err: Error) {
+                                    reject(err);
+                                }));
+                            }
+
+                            Promise.all(promises2).then(function () {
+                                set.add(rooms);
+                                that.saveFile(id, set);
+                                fulfill(true);
+                            }).catch(function (err) {
+                                reject(err);
+                            });
+                        }).catch(function (err: Error) {
+                            reject(err);
                         });
                     }).catch(function (err) {
                         reject(err);
@@ -181,24 +221,82 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    private processNode(node: any, id: string): any {
-        let r: any ={};
+    private HttpGet(r: any, id: string): Promise<GeoResponse> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            let http = require('http');
+            let url = r[id + '_address'];
+            url = "http://skaha.cs.ubc.ca:11316/api/v1/team198/".concat(encodeURIComponent(url));
+            http.get(url, (res: any) => {
+                let body = "";
+                res.on('data', (chunk: any) => {
+                    body += chunk;
+                });
+                res.on('end', () => {
+                    body = body.trim();
+                    let res: GeoResponse = {};
+
+                    if (body.indexOf("\"lat\":") > -1) {
+                        res.lat = parseFloat(body.substring(body.indexOf("\"lat\":") + 6, body.indexOf(",")));
+                    }
+                    if (body.indexOf("\"lon\":") > -1) {
+                        res.lon = parseFloat(body.substring(body.indexOf("\"lon\":") + 6, body.indexOf("}")));
+                    }
+                    if (body.indexOf("\"error\":") > -1) {
+                        res.error = (body.substring(body.indexOf(":") + 2, body.indexOf("}") - 1));
+                    }
+                    fulfill(res);
+                });
+            }).on('error', (e: Error) => {
+                console.log(e.message);
+                reject(e);
+            })
+        });
+    }
+
+    private processNode(node: any, id: string): Object {
+        let r: any = {};
         let str: string;
+
         if(node.attrs[0].value == 'views-field views-field-field-building-code') {
             str = node.childNodes[0].value;
-            r[id+'_shortname'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_shortname'] = str.substring(str.indexOf('\n')+2).trim();
         }
+
         else if(node.attrs[0].value == 'views-field views-field-title') {
             node = node.childNodes[1];
             str = node.attrs[0].value;
-            r[id+'_href'] = str.substring(str.indexOf('./')+2);
-            //r[id+'_href'] = 'http://students.ubc.ca/'.concat(str);
-            r[id+'_fullname'] = node.childNodes[0].value;
+            r[id + '_href'] = str.substring(str.indexOf('./')+2);
+            r[id + '_fullname'] = node.childNodes[0].value;
         }
+
         else if(node.attrs[0].value == 'views-field views-field-field-building-address') {
             str = node.childNodes[0].value;
-            r[id+'_address'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_address'] = str.substring(str.indexOf('\n')+2).trim();
         }
+
+        else if(node.attrs[0].value == 'views-field views-field-field-room-number') {
+            node = node.childNodes[1];
+            if(node.attrs[0].name == 'href')
+                r[id+'_href'] = node.attrs[0].value;
+            r[id+'_number'] = node.childNodes[0].value;
+        }
+
+        else if(node.attrs[0].value == 'views-field views-field-field-room-capacity') {
+            str = node.childNodes[0].value;
+            r[id+'_seats'] = str.substring(str.indexOf('\n')+2).trim();
+        }
+
+        else if(node.attrs[0].value == 'views-field views-field-field-room-furniture') {
+            str = node.childNodes[0].value;
+            r[id+'_furniture'] = str.substring(str.indexOf('\n')+2).trim();
+        }
+
+        else if(node.attrs[0].value == 'views-field views-field-field-room-type') {
+            str = node.childNodes[0].value;
+            r[id+'_type'] = str.substring(str.indexOf('\n')+2).trim();
+        }
+
         return r;
     }
 

@@ -37,4 +37,14 @@ describe("RoomsSpec", function () {
             expect.fail();
         });
     });
+
+    it("removeDataset rooms", function () {
+        return inf.removeDataset('rooms').then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(204);
+        }).catch(function (err: Error) {
+            Log.error(err.message);
+            expect.fail();
+        });
+    })
 });
