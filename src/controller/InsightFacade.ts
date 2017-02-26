@@ -69,7 +69,6 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let where: Where = query.WHERE;
                 let options: Options = query.OPTIONS;
-
                 let key = options.COLUMNS[0].split('_')[0];
                 if (!that.dataStruct.hasOwnProperty(key))
                     reject({code: 424, body: {missing: [key]}});
@@ -152,8 +151,7 @@ export default class InsightFacade implements IInsightFacade {
                                                         Object.assign(room, that.processNode(cnode, id));
                                                     }
                                                 });
-
-
+                                                
                                                 for(let key in bldg){
                                                     if(key != id+'_href') {
                                                         room[key] = bldg[key];
@@ -175,7 +173,9 @@ export default class InsightFacade implements IInsightFacade {
                             }
 
                             Promise.all(promises2).then(function () {
-                                set.add(rooms);
+                                for(let room of rooms) {
+                                    set.add(room);
+                                }
                                 that.saveFile(id, set);
                                 fulfill(true);
                             }).catch(function (err) {
@@ -331,11 +331,23 @@ export default class InsightFacade implements IInsightFacade {
                     order = opt.ORDER;
                     if (!columns.includes(order))
                         reject(new Error("ORDER should be present in COLUMNS"));
-                    else if (!set.data[0].hasOwnProperty(order))
-                        reject(new Error("Invalid ORDER"));
-                    set.data.sort(function (a, b) {
-                        return a[order] - b[order];
-                    });
+                    else {
+                        try {
+                            if(typeof set.data[0][order] == 'number') {
+                                set.data.sort(function (a, b) {
+                                    return a[order] - b[order];
+                                });
+                            }
+                            else if(typeof set.data[0][order] == 'string') {
+                                set.data.sort(function (a, b) {
+                                    return parseInt(a[order].split('_')[1]) - parseInt(b[order].split('_')[1]);
+                                })
+                            }
+                        }
+                        catch (err) {
+                            reject(err);
+                        }
+                    }
                 }
 
                 if (columns.length == 0)
@@ -346,8 +358,6 @@ export default class InsightFacade implements IInsightFacade {
                         let key = col.split('_')[0];
                         if(!that.dataStruct.hasOwnProperty(key))
                             err.missing.push(key);
-                        else if(!that.dataStruct[key].data[10].hasOwnProperty(col))
-                            reject(new Error("Invalid COLUMNS"));
                     }
                     if(err.missing.length > 0) {
                         reject(err);
@@ -356,7 +366,7 @@ export default class InsightFacade implements IInsightFacade {
 
                 if(set.data.length == 0)
                     fulfill({render: form, result: []});
-                
+
                 if(form == "TABLE") {
                     let render = form;
                     let result: any[] = [];
@@ -366,9 +376,11 @@ export default class InsightFacade implements IInsightFacade {
                             if(data.hasOwnProperty(col))
                                 c[col] = data[col];
                         }
-                        if(Object.keys(c).length > 0)
+                        if(Object.keys(c).length == columns.length)
                             result.push(c);
                     }
+                    if(result.length == 0)
+                        reject(new Error("Invalid COLUMNS"));
                     let qr: QueryResponse = {render: render, result: result};
                     fulfill(qr);
                 }

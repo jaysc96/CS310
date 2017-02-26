@@ -1,7 +1,8 @@
 import InsightFacade from "../src/controller/InsightFacade";
 import Log from "../src/Util";
-import {InsightResponse} from "../src/controller/IInsightFacade";
+import {InsightResponse, QueryRequest} from "../src/controller/IInsightFacade";
 import {expect} from 'chai';
+import {Query} from "../src/Querying";
 /**
  * Created by jaysinghchauhan on 2/21/17.
  */
@@ -36,6 +37,53 @@ describe("RoomsSpec", function () {
             Log.error(err.message);
             expect.fail();
         });
+    });
+
+    it('perform simple query', function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "IS": {
+                    "rooms_name": "DMP_*"
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_name"
+                ],
+                "ORDER": "rooms_name",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr.body));
+            expect(inr.code).to.equal(200)
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        })
+    });
+
+    it('perform complex query', function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "IS": {
+                    "rooms_address": "*Agrono*"
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_address", "rooms_name"
+                ],
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr.body));
+            expect(inr.code).to.equal(200)
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        })
     });
 
     it("removeDataset rooms", function () {

@@ -328,20 +328,26 @@ export default class Querying {
             }
 
             for(let obj of data) {
-                if(obj[key].includes(str)) {
-                    if(pos == "front") {
-                        if(obj[key].indexOf(str) == (obj[key].length-str.length))
+                if(obj.hasOwnProperty(key)) {
+                    if (obj[key].includes(str)) {
+                        if (pos == "front") {
+                            if (obj[key].indexOf(str) == (obj[key].length - str.length))
+                                set.add(obj);
+                        }
+                        else if (pos == "back") {
+                            if (obj[key].indexOf(str) == 0)
+                                set.add(obj);
+                        }
+                        else if (pos == "both")
                             set.add(obj);
                     }
-                    else if(pos == "back") {
-                        if(obj[key].indexOf(str) == 0)
-                            set.add(obj);
-                    }
-                    else if(pos == "both")
-                        set.add(obj);
                 }
             }
-            fulfill(set);
+
+            if(set.data.length > 0)
+                fulfill(set);
+            else
+                reject(new Error("Invalid IS key"));
         })
     }
 
