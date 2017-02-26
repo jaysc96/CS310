@@ -169,21 +169,31 @@ export default class Querying {
                 let key = keys[0];
                 let id = key.split('_')[0];
                 if (id != that.id) {
-                    that.err.missing.push(id);
-                    reject(that.err);
+                    if(!that.isValidId(id)) {
+                        that.err.missing.push(id);
+                        reject(that.err);
+                    }
+                    else
+                        reject(new Error("Querying on multiple keys in dataset is not valid"));
                 }
                 else
                     data = that.dataSet.data;
                 let bound = gt[key];
                 if (typeof bound !== 'number')
                     reject(new Error("Invalid GT"));
+
+                let flag = 1;
                 for (let obj of data) {
-                    if (!obj.hasOwnProperty(key))
-                        reject(new Error("Invalid GT key"));
-                    if (obj[key] > bound)
-                        set.add(obj);
+                    if (obj.hasOwnProperty(key)) {
+                        flag = 0;
+                        if (obj[key] > bound)
+                            set.add(obj);
+                    }
                 }
-                fulfill(set);
+                if(flag == 0)
+                    fulfill(set);
+                else
+                    reject(new Error("Invalid LT key"));
             }
             catch(err) {
                 reject(err);
@@ -204,20 +214,31 @@ export default class Querying {
                 let data: any[];
                 let id = key.split('_')[0];
                 if (id != that.id) {
-                    that.err.missing.push(id);
-                    reject(that.err);
+                    if(!that.isValidId(id)) {
+                        that.err.missing.push(id);
+                        reject(that.err);
+                    }
+                    else
+                        reject(new Error("Querying on multiple keys in dataset is not valid"));
                 }
                 else
                     data = that.dataSet.data;
                 if (typeof bound !== 'number')
                     reject(new Error("Invalid LT"));
+
+                let flag = 1;
                 for (let obj of data) {
-                    if (!obj.hasOwnProperty(key))
-                        reject(new Error("Invalid LT key"));
-                    if (obj[key] < bound)
-                        set.add(obj);
+                    if (obj.hasOwnProperty(key)) {
+                        flag = 0;
+                        if (obj[key] < bound)
+                            set.add(obj);
+                    }
                 }
-                fulfill(set);
+
+                if(flag == 0)
+                    fulfill(set);
+                else
+                    reject(new Error("Invalid LT key"));
             }
             catch (err) {
                 reject(err);
@@ -238,20 +259,30 @@ export default class Querying {
                 let data: any[];
                 let id = key.split('_')[0];
                 if (id != that.id){
-                    that.err.missing.push(id);
-                    reject(that.err);
+                    if(!that.isValidId(id)) {
+                        that.err.missing.push(id);
+                        reject(that.err);
+                    }
+                    else
+                        reject(new Error("Querying on multiple keys in dataset is not valid"));
                 }
                 else
                     data = that.dataSet.data;
                 if (typeof bound !== 'number')
                     reject(new Error("Invalid EQ"));
+
+                let flag = 1;
                 for (let obj of data) {
-                    if (!obj.hasOwnProperty(key))
-                        reject(new Error("Invalid EQ key"));
-                    if (obj[key] == bound)
-                        set.add(obj);
+                    if (obj.hasOwnProperty(key)) {
+                        flag = 0;
+                        if (obj[key] == bound)
+                            set.add(obj);
+                    }
                 }
-                fulfill(set);
+                if(flag == 0)
+                    fulfill(set);
+                else
+                    reject(new Error("Invalid EQ key"));
             }
             catch (err) {
                 reject(err);
@@ -275,8 +306,12 @@ export default class Querying {
                 let data: any[];
 
                 if (id != that.id){
-                    that.err.missing.push(id);
-                    reject(that.err);
+                    if(!that.isValidId(id)) {
+                        that.err.missing.push(id);
+                        reject(that.err);
+                    }
+                    else
+                        reject(new Error("Querying on multiple keys in dataset is not valid"));
                 }
                 else
                     data = that.dataSet.data;
@@ -286,13 +321,18 @@ export default class Querying {
                 else if(val.includes('*'))
                     fulfill(that.filterPartial(is));
                 else {
+                    let flag = 1;
                     for (let obj of data) {
-                        if (!obj.hasOwnProperty(key))
-                            reject(new Error("Invalid IS key"));
-                        else if (obj[key].includes(val))
-                            set.add(obj);
+                        if (obj.hasOwnProperty(key)) {
+                            flag = 0;
+                            if (obj[key].includes(val))
+                                set.add(obj);
+                        }
                     }
-                    fulfill(set);
+                    if(flag == 0)
+                        fulfill(set);
+                    else
+                        reject(new Error("Invalid IS"));
                 }
             }
             catch (err) {
@@ -322,13 +362,16 @@ export default class Querying {
                     pos = 'back';
                 }
             }
+
             else {
                 str = str.substring(str.indexOf('*')+1, str.lastIndexOf('*'));
                 pos = 'both';
             }
 
+            let flag = 1;
             for(let obj of data) {
                 if(obj.hasOwnProperty(key)) {
+                    flag = 0;
                     if (obj[key].includes(str)) {
                         if (pos == "front") {
                             if (obj[key].indexOf(str) == (obj[key].length - str.length))
@@ -344,11 +387,15 @@ export default class Querying {
                 }
             }
 
-            if(set.data.length > 0)
+            if(flag == 0)
                 fulfill(set);
             else
                 reject(new Error("Invalid IS key"));
         })
+    }
+
+    private isValidId(id: string): boolean {
+        return id == 'rooms' || id == 'courses';
     }
 
     private union(d1: any[], d2: any[]): any[] {

@@ -72,8 +72,9 @@ describe("RoomsSpec", function () {
             },
             "OPTIONS": {
                 "COLUMNS": [
-                    "rooms_address", "rooms_name"
+                    "rooms_address", "rooms_href"
                 ],
+                "ORDER": "rooms_href",
                 "FORM": "TABLE"
             }
         };

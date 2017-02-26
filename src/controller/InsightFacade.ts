@@ -103,7 +103,7 @@ export default class InsightFacade implements IInsightFacade {
             let set = new Dataset();
 
             JSZip.loadAsync(content, {base64: true}).then(function (zip: JSZip) {
-                if(zip.file("index.htm") !== null) {
+                if(id == 'rooms') {
                     zip.file("index.htm").async('string').then(function (file) {
                         let i = file.indexOf("<tbody>");
                         let j = file.indexOf("</tbody>");
@@ -137,7 +137,7 @@ export default class InsightFacade implements IInsightFacade {
                         Promise.all(promises).then(function () {
                             let promises2: Promise<any>[] = [];
                             for(let bldg of bldgs) {
-                                promises2.push(zip.file(bldg[id + '_href']).async('string').then(function (str) {
+                                promises2.push(zip.file(bldg['href']).async('string').then(function (str) {
                                     let m = str.indexOf("<tbody>");
                                     let n = str.indexOf("</tbody>");
                                     let tbody = parse5.parseFragment(str.substring(m,n)).childNodes[0];
@@ -151,7 +151,7 @@ export default class InsightFacade implements IInsightFacade {
                                                         Object.assign(room, that.processNode(cnode, id));
                                                     }
                                                 });
-                                                
+
                                                 for(let key in bldg){
                                                     if(key != id+'_href') {
                                                         room[key] = bldg[key];
@@ -188,7 +188,7 @@ export default class InsightFacade implements IInsightFacade {
                         reject(err);
                     })
                 }
-                else {
+                else if(id == 'courses') {
                     zip.folder(id).forEach(function (relativePath, file) {
                         promises.push(file.async('string').then(JSON.parse).then(function (obj) {
                             for (let res of obj.result) {
@@ -203,7 +203,7 @@ export default class InsightFacade implements IInsightFacade {
                                     c[id + '_pass'] = res.Pass;
                                     c[id + '_fail'] = res.Fail;
                                     c[id + '_audit'] = res.Audit;
-                                    c[id + '_year'] = res.Section == "overall" ? 1900 : res.Year;
+                                    c[id + '_year'] = res.Section == "overall" ? 1900 : parseInt(res.Year);
                                     set.add(c);
                                 }
                             }
@@ -216,6 +216,9 @@ export default class InsightFacade implements IInsightFacade {
                         fulfill(true);
                     });
                 }
+
+                else
+                    reject(new Error('Invalid id of dataset added'));
             }).catch(function (err: Error) {
                 reject(err);
             });
@@ -267,7 +270,7 @@ export default class InsightFacade implements IInsightFacade {
         else if(node.attrs[0].value == 'views-field views-field-title') {
             node = node.childNodes[1];
             str = node.attrs[0].value;
-            r[id + '_href'] = str.substring(str.indexOf('./')+2);
+            r['href'] = str.substring(str.indexOf('./')+2);
             r[id + '_fullname'] = node.childNodes[0].value;
         }
 
@@ -327,28 +330,6 @@ export default class InsightFacade implements IInsightFacade {
                 let columns = opt.COLUMNS;
                 let form = opt.FORM;
                 let order: string;
-                if(opt.hasOwnProperty('ORDER')) {
-                    order = opt.ORDER;
-                    if (!columns.includes(order))
-                        reject(new Error("ORDER should be present in COLUMNS"));
-                    else {
-                        try {
-                            if(typeof set.data[0][order] == 'number') {
-                                set.data.sort(function (a, b) {
-                                    return a[order] - b[order];
-                                });
-                            }
-                            else if(typeof set.data[0][order] == 'string') {
-                                set.data.sort(function (a, b) {
-                                    return parseInt(a[order].split('_')[1]) - parseInt(b[order].split('_')[1]);
-                                })
-                            }
-                        }
-                        catch (err) {
-                            reject(err);
-                        }
-                    }
-                }
 
                 if (columns.length == 0)
                     reject(new Error ("Empty COLUMNS"));
@@ -364,8 +345,39 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
 
-                if(set.data.length == 0)
-                    fulfill({render: form, result: []});
+                if(opt.hasOwnProperty('ORDER')) {
+                    order = opt.ORDER;
+                    if (!columns.includes(order))
+                        reject(new Error("ORDER should be present in COLUMNS"));
+                    else {
+                        if(set.data.length == 0)
+                            fulfill({render: form, result: []});
+                        try {
+                            if(typeof set.data[0][order] == 'number') {
+                                set.data.sort(function (a, b) {
+                                    return a[order] - b[order];
+                                });
+                            }
+                            else if(typeof set.data[0][order] == 'string') {
+                                if(order.split('_')[1] == 'name')
+                                    set.data.sort(function (a, b) {
+                                        return parseInt(a[order].split('_')[1]) - parseInt(b[order].split('_')[1]);
+                                    });
+                                else if (order.split('_')[1] == 'href')
+                                    set.data.sort(function (a, b) {
+                                        let p = a[order].substring(a[order].lastIndexOf('/')+1);
+                                        let q = b[order].substring(b[order].lastIndexOf('/')+1);
+                                        p = p.split('-')[1];
+                                        q = q.split('-')[1];
+                                        return parseInt(p)-parseInt(q);
+                                    })
+                            }
+                        }
+                        catch (err) {
+                            reject(err);
+                        }
+                    }
+                }
 
                 if(form == "TABLE") {
                     let render = form;

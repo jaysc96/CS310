@@ -171,13 +171,13 @@ describe("CoursesSpec", function () {
         });
     });
 
-    it("do not perform invalid 'OPTIONS' query", function () {
+    it("perform contradictory query", function () {
         let query = {
             "WHERE":{
-                "OR": [
+                "AND": [
                     {
-                        "EQ": {
-                            "courses_avg": 95
+                        "LT": {
+                            "courses_avg": 75
                         }
                     },
                     {
@@ -190,20 +190,18 @@ describe("CoursesSpec", function () {
             "OPTIONS": {
                 "COLUMNS": [
                     "courses_dept",
-                    "courses_sys",
                     "courses_avg",
-                    "courses_uuid"
                 ],
                 "ORDER": "courses_avg",
                 "FORM": "TABLE"
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
             Log.error(JSON.stringify(inr));
             expect.fail();
-        }).catch(function (inr: InsightResponse) {
-            Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(400);
         });
     });
 
