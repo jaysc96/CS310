@@ -118,6 +118,7 @@ export default class InsightFacade implements IInsightFacade {
                                     if(cnode.nodeName == 'td')
                                         Object.assign(bldg, that.processNode(cnode, id));
                                 });
+
                                 if(bldg.hasOwnProperty(id + '_address')) {
                                     promises.push(that.HttpGet(bldg, id).then((gr) => {
                                         if(!gr.hasOwnProperty('error')) {
@@ -129,8 +130,6 @@ export default class InsightFacade implements IInsightFacade {
                                         bldgs.push(bldg);
                                     }));
                                 }
-                                else
-                                    bldgs.push(bldg);
                             }
                         });
 
@@ -153,7 +152,7 @@ export default class InsightFacade implements IInsightFacade {
                                                 });
 
                                                 for(let key in bldg){
-                                                    if(key != id+'_href') {
+                                                    if(key != 'href') {
                                                         room[key] = bldg[key];
                                                     }
                                                 }
@@ -165,8 +164,6 @@ export default class InsightFacade implements IInsightFacade {
                                             }
                                         });
                                     }
-                                    else
-                                        rooms.push(bldg);
                                 }).catch(function(err: Error) {
                                     reject(err);
                                 }));
@@ -252,7 +249,7 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(res);
                 });
             }).on('error', (e: Error) => {
-                console.log(e.message);
+                Log.error(e.message);
                 reject(e);
             })
         });
@@ -288,7 +285,7 @@ export default class InsightFacade implements IInsightFacade {
 
         else if(node.attrs[0].value == 'views-field views-field-field-room-capacity') {
             str = node.childNodes[0].value;
-            r[id + '_seats'] = str.substring(str.indexOf('\n')+2).trim();
+            r[id + '_seats'] = parseInt(str.substring(str.indexOf('\n')+2).trim());
         }
 
         else if(node.attrs[0].value == 'views-field views-field-field-room-furniture') {
@@ -359,18 +356,9 @@ export default class InsightFacade implements IInsightFacade {
                                 });
                             }
                             else if(typeof set.data[0][order] == 'string') {
-                                if(order.split('_')[1] == 'name')
-                                    set.data.sort(function (a, b) {
-                                        return parseInt(a[order].split('_')[1]) - parseInt(b[order].split('_')[1]);
-                                    });
-                                else if (order.split('_')[1] == 'href')
-                                    set.data.sort(function (a, b) {
-                                        let p = a[order].substring(a[order].lastIndexOf('/')+1);
-                                        let q = b[order].substring(b[order].lastIndexOf('/')+1);
-                                        p = p.split('-')[1];
-                                        q = q.split('-')[1];
-                                        return parseInt(p)-parseInt(q);
-                                    })
+                                set.data.sort(function (a, b) {
+                                    return a[order] == b[order] ? 0 : a[order] < b[order] ? -1 : 1;
+                                });
                             }
                         }
                         catch (err) {
@@ -378,6 +366,9 @@ export default class InsightFacade implements IInsightFacade {
                         }
                     }
                 }
+
+                if(set.data.length == 0)
+                    fulfill({render: form, result: []});
 
                 if(form == "TABLE") {
                     let render = form;

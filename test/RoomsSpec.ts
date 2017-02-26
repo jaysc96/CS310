@@ -43,7 +43,7 @@ describe("RoomsSpec", function () {
         let query: QueryRequest = {
             "WHERE": {
                 "IS": {
-                    "rooms_name": "DMP_*"
+                    "rooms_name": "*110"
                 }
             },
             "OPTIONS": {
@@ -65,19 +65,20 @@ describe("RoomsSpec", function () {
 
     it('perform complex query', function () {
         let query: QueryRequest = {
-            "WHERE": {
-                "IS": {
-                    "rooms_address": "*Agrono*"
+            "WHERE":{
+                "IS":{
+                    "rooms_furniture": "Classroom-Movable Tables & Chairs"
                 }
             },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "rooms_address", "rooms_href"
+            "OPTIONS":{
+                "COLUMNS":[
+                    "rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
+                    "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"
                 ],
-                "ORDER": "rooms_href",
-                "FORM": "TABLE"
+                "ORDER":"rooms_name",
+                "FORM":"TABLE"
             }
-        };
+        };;
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));
             expect(inr.code).to.equal(200)

@@ -176,8 +176,8 @@ describe("CoursesSpec", function () {
             "WHERE":{
                 "AND": [
                     {
-                        "LT": {
-                            "courses_avg": 75
+                        "EQ": {
+                            "courses_avg": 96
                         }
                     },
                     {
@@ -212,12 +212,12 @@ describe("CoursesSpec", function () {
                 "AND": [
                     {
                         "IS": {
-                            "courses_dept": 'math'
+                            "courses_dept": '*c*'
                         }
                     },
                     {
                         "IS": {
-                            "courses_instructor": '*alb*'
+                            "courses_instructor": 'a*'
                         }
                     }
                 ]
