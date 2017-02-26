@@ -120,7 +120,7 @@ export default class Querying {
                 if(sets.length == and.length) {
                     let data: any[] = sets[0].data;
                     for(let set of sets) {
-                        data = that.intersection(data, set.data)
+                        data = that.intersection(data, set.data);
                     }
                     let dset = new Dataset();
                     dset.data = data;

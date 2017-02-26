@@ -191,6 +191,7 @@ describe("CoursesSpec", function () {
                 "COLUMNS": [
                     "courses_dept",
                     "courses_avg",
+                    'courses_id'
                 ],
                 "ORDER": "courses_avg",
                 "FORM": "TABLE"
@@ -203,6 +204,42 @@ describe("CoursesSpec", function () {
             Log.error(JSON.stringify(inr));
             expect.fail();
         });
+    });
+
+    it('find instructors in a dept', function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "IS": {
+                            "courses_dept": 'math'
+                        }
+                    },
+                    {
+                        "IS": {
+                            "courses_instructor": '*alb*'
+                        }
+                    }
+                ]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_avg",
+                    "courses_instructor",
+                    "courses_id"
+                ],
+                "ORDER": "courses_avg",
+                "FORM": "TABLE"
+            }
+        };
+            return inf.performQuery(query).then(function (inr: InsightResponse) {
+                Log.test(JSON.stringify(inr));
+                expect(inr.code).to.equal(200);
+            }).catch(function (inr: InsightResponse) {
+                Log.error(JSON.stringify(inr));
+                expect.fail();
+            });
     });
 
     it("do not perform invalid query", function () {
