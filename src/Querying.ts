@@ -181,19 +181,20 @@ export default class Querying {
                 let bound = gt[key];
                 if (typeof bound != 'number')
                     reject(new Error("Invalid GT"));
-
-                let flag = 1;
-                for (let obj of data) {
-                    if (obj.hasOwnProperty(key)) {
-                        flag = 0;
-                        if (obj[key] > bound)
-                            set.add(obj);
+                else {
+                    let flag = 1;
+                    for (let obj of data) {
+                        if (obj.hasOwnProperty(key)) {
+                            flag = 0;
+                            if (obj[key] > bound)
+                                set.add(obj);
+                        }
                     }
+                    if (flag == 0)
+                        fulfill(set);
+                    else
+                        reject(new Error("Invalid LT key"));
                 }
-                if(flag == 0)
-                    fulfill(set);
-                else
-                    reject(new Error("Invalid LT key"));
             }
             catch(err) {
                 reject(err);
@@ -223,22 +224,24 @@ export default class Querying {
                 }
                 else
                     data = that.dataSet.data;
+
                 if (typeof bound != 'number')
                     reject(new Error("Invalid LT"));
-
-                let flag = 1;
-                for (let obj of data) {
-                    if (obj.hasOwnProperty(key)) {
-                        flag = 0;
-                        if (obj[key] < bound)
-                            set.add(obj);
+                else {
+                    let flag = 1;
+                    for (let obj of data) {
+                        if (obj.hasOwnProperty(key)) {
+                            flag = 0;
+                            if (obj[key] < bound)
+                                set.add(obj);
+                        }
                     }
-                }
 
-                if(flag == 0)
-                    fulfill(set);
-                else
-                    reject(new Error("Invalid LT key"));
+                    if (flag == 0)
+                        fulfill(set);
+                    else
+                        reject(new Error("Invalid LT key"));
+                }
             }
             catch (err) {
                 reject(err);
@@ -268,21 +271,23 @@ export default class Querying {
                 }
                 else
                     data = that.dataSet.data;
+
                 if (typeof bound != 'number')
                     reject(new Error("Invalid EQ"));
-
-                let flag = 1;
-                for (let obj of data) {
-                    if (obj.hasOwnProperty(key)) {
-                        flag = 0;
-                        if (obj[key] == bound)
-                            set.add(obj);
+                else {
+                    let flag = 1;
+                    for (let obj of data) {
+                        if (obj.hasOwnProperty(key)) {
+                            flag = 0;
+                            if (obj[key] == bound)
+                                set.add(obj);
+                        }
                     }
+                    if (flag == 0)
+                        fulfill(set);
+                    else
+                        reject(new Error("Invalid EQ key"));
                 }
-                if(flag == 0)
-                    fulfill(set);
-                else
-                    reject(new Error("Invalid EQ key"));
             }
             catch (err) {
                 reject(err);
