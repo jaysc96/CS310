@@ -88,6 +88,188 @@ describe("RoomsSpec", function () {
         })
     });
 
+    it("find rooms with plenty of seats in a building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "GT": {
+                    "rooms_seats": 100
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_address", "rooms_name", "rooms_seats"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr.body));
+            expect(inr.code).to.equal(200)
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        })
+
+    });
+
+    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "LT": {
+                            "rooms_seats": 100
+                        }
+                    }, {
+                        "IS": {
+                            "rooms_type": "Non-studio"
+                        }
+                    }]
+
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_type", "rooms_name", "rooms_seats"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr.body));
+            expect(inr.code).to.equal(200)
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        });
+    });
+
+    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "LT": {
+                            "rooms_seats": "hello"
+                        }
+                    }, {
+                        "IS": {
+                            "rooms_type": "Non-studio"
+                        }
+                    }]
+                },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_type", "rooms_name", "rooms_seats"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(400)
+        })
+    });
+
+    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "LT": {
+                            "rooms_seats": "hello"
+                        }
+                    }, {
+                        "IS": {
+                            "rooms_type": 1
+                        }
+                    }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_type", "rooms_name", "rooms_seats"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(400)
+        })
+    });
+
+
+    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "LT": {
+                            "rooms_seats": "hello"
+                        }
+                    }, {
+                        "IS": {
+                            "rooms_type": 1
+                        }
+                    }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_type", "rooms_name", "rooms_seats"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(400)
+        })
+    });
+
+    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+        let query: QueryRequest = {
+            "WHERE": {
+                "AND": [
+                    {
+                        "LT": {
+                            "rooms_seats": "hello"
+                        }
+                    }, {
+                        "IS": {
+                            "rooms_type": 1
+                        }
+                    }]
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_type", "rooms_name"
+                ],
+                "ORDER": "rooms_seats",
+                "FORM": "TABLE"
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        }).catch(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(400)
+        })
+    });
+
     it("removeDataset rooms", function () {
         return inf.removeDataset('rooms').then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr));
@@ -96,5 +278,5 @@ describe("RoomsSpec", function () {
             Log.error(err.message);
             expect.fail();
         });
-    })
+    });
 });
