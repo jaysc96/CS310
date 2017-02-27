@@ -179,7 +179,7 @@ export default class Querying {
                 else
                     data = that.dataSet.data;
                 let bound = gt[key];
-                if (typeof bound !== 'number')
+                if (typeof bound != 'number')
                     reject(new Error("Invalid GT"));
 
                 let flag = 1;
@@ -223,7 +223,7 @@ export default class Querying {
                 }
                 else
                     data = that.dataSet.data;
-                if (typeof bound !== 'number')
+                if (typeof bound != 'number')
                     reject(new Error("Invalid LT"));
 
                 let flag = 1;
@@ -268,7 +268,7 @@ export default class Querying {
                 }
                 else
                     data = that.dataSet.data;
-                if (typeof bound !== 'number')
+                if (typeof bound != 'number')
                     reject(new Error("Invalid EQ"));
 
                 let flag = 1;
@@ -316,7 +316,7 @@ export default class Querying {
                 else
                     data = that.dataSet.data;
 
-                if (typeof val !== 'string')
+                if (typeof val != 'string')
                     reject(new Error("Invalid IS"));
                 else if(val.includes('*'))
                     fulfill(that.filterPartial(is));
@@ -325,7 +325,7 @@ export default class Querying {
                     for (let obj of data) {
                         if (obj.hasOwnProperty(key)) {
                             flag = 0;
-                            if (obj[key].includes(val))
+                            if (obj[key] == val)
                                 set.add(obj);
                         }
                     }

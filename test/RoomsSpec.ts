@@ -182,7 +182,7 @@ describe("RoomsSpec", function () {
                 "AND": [
                     {
                         "LT": {
-                            "rooms_seats": "hello"
+                            "rooms_seats": 100
                         }
                     }, {
                         "IS": {
@@ -214,11 +214,11 @@ describe("RoomsSpec", function () {
                 "AND": [
                     {
                         "LT": {
-                            "rooms_seats": "hello"
+                            "rooms_seats": 100
                         }
                     }, {
                         "IS": {
-                            "rooms_type": 1
+                            "courses_type": "Non-studio"
                         }
                     }]
             },
@@ -245,11 +245,11 @@ describe("RoomsSpec", function () {
                 "AND": [
                     {
                         "LT": {
-                            "rooms_seats": "hello"
+                            "rooms_seats": 100
                         }
                     }, {
                         "IS": {
-                            "rooms_type": 1
+                            "rooms_type": "Non-studio"
                         }
                     }]
             },
