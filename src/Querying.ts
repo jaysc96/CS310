@@ -414,12 +414,7 @@ export default class Querying {
     }
 
     private union(d1: any[], d2: any[]): any[] {
-        for (let obj of d1) {
-            if (!d2.includes(obj)) {
-                d2.push(obj);
-            }
-        }
-        return d2;
+        return d1.concat(d2.filter(x => d1.indexOf(x) === -1));
     }
 
     private intersection(d1: any[], d2: any[]): any[] {
