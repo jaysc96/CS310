@@ -31,7 +31,7 @@ export interface QueryResponse {
 export default class Querying {
     public dataSet: Dataset;
     public id: string;
-    public err: any;
+    private err: any;
 
     constructor(data: Struct, id: string) {
         this.dataSet = data[id];
@@ -90,8 +90,7 @@ export default class Querying {
                         if (that.err.missing.length != 0)
                             reject(that.err);
                         let set = new Dataset();
-                        set.data = that.dataSet.data;
-                        dset.data = that.negation(dset.data, set.data);
+                        dset.data = that.negation(dset.data, that.dataSet.data);
                         fulfill(dset);
                     }).catch(function (err) {
                         reject(err);
@@ -178,17 +177,19 @@ export default class Querying {
                 }
                 else
                     data = that.dataSet.data;
+
                 let bound = gt[key];
-                if (typeof bound != 'number')
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid GT"));
                 else {
                     let flag = 1;
                     for (let obj of data) {
-                        if (obj.hasOwnProperty(key)) {
-                            flag = 0;
-                            if (obj[key] > bound)
-                                set.add(obj);
-                        }
+                        if (obj.hasOwnProperty(key))
+                            if(typeof obj[key] === 'number') {
+                                flag = 0;
+                                if (obj[key] > bound)
+                                    set.add(obj);
+                            }
                     }
                     if (flag == 0)
                         fulfill(set);
@@ -225,16 +226,17 @@ export default class Querying {
                 else
                     data = that.dataSet.data;
 
-                if (typeof bound != 'number')
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid LT"));
                 else {
                     let flag = 1;
                     for (let obj of data) {
-                        if (obj.hasOwnProperty(key)) {
-                            flag = 0;
-                            if (obj[key] < bound)
-                                set.add(obj);
-                        }
+                        if (obj.hasOwnProperty(key))
+                            if(typeof obj[key] === 'number') {
+                                flag = 0;
+                                if (obj[key] < bound)
+                                    set.add(obj);
+                            }
                     }
 
                     if (flag == 0)
@@ -272,16 +274,17 @@ export default class Querying {
                 else
                     data = that.dataSet.data;
 
-                if (typeof bound != 'number')
+                if (typeof bound !== 'number')
                     reject(new Error("Invalid EQ"));
                 else {
                     let flag = 1;
                     for (let obj of data) {
-                        if (obj.hasOwnProperty(key)) {
-                            flag = 0;
-                            if (obj[key] == bound)
-                                set.add(obj);
-                        }
+                        if (obj.hasOwnProperty(key))
+                            if(typeof obj[key] === 'number') {
+                                flag = 0;
+                                if (obj[key] == bound)
+                                    set.add(obj);
+                            }
                     }
                     if (flag == 0)
                         fulfill(set);
@@ -321,18 +324,19 @@ export default class Querying {
                 else
                     data = that.dataSet.data;
 
-                if (typeof val != 'string')
+                if (typeof val !== 'string')
                     reject(new Error("Invalid IS"));
                 else if(val.includes('*'))
                     fulfill(that.filterPartial(is));
                 else {
                     let flag = 1;
                     for (let obj of data) {
-                        if (obj.hasOwnProperty(key)) {
-                            flag = 0;
-                            if (obj[key] == val)
-                                set.add(obj);
-                        }
+                        if (obj.hasOwnProperty(key))
+                            if(typeof obj[key] === 'string') {
+                                flag = 0;
+                                if (obj[key] == val)
+                                    set.add(obj);
+                            }
                     }
                     if(flag == 0)
                         fulfill(set);
@@ -349,53 +353,59 @@ export default class Querying {
     private filterPartial(is: Query): Promise<Dataset> {
         let that = this;
         return new Promise(function (fulfill, reject) {
-            let key = Object.keys(is)[0];
-            let str = is[key];
-            let data = that.dataSet.data;
-            let pos: string;
-            let set = new Dataset();
+            try {
+                let key = Object.keys(is)[0];
+                let str = is[key];
+                let data = that.dataSet.data;
+                let pos: string;
+                let set = new Dataset();
 
-            if(str.indexOf('*') == str.lastIndexOf('*')) {
-                if(str.indexOf('*') == 0) {
-                    if(str.length == 1)
-                        reject(new Error("Invalid IS"));
-                    str = str.substring(str.indexOf('*')+1);
-                    pos = 'front';
-                }
-                else {
-                    str = str.substring(0, str.indexOf('*'));
-                    pos = 'back';
-                }
-            }
-
-            else {
-                str = str.substring(str.indexOf('*')+1, str.lastIndexOf('*'));
-                pos = 'both';
-            }
-
-            let flag = 1;
-            for(let obj of data) {
-                if(obj.hasOwnProperty(key)) {
-                    flag = 0;
-                    if (obj[key].includes(str)) {
-                        if (pos == "front") {
-                            if (obj[key].indexOf(str) == (obj[key].length - str.length))
-                                set.add(obj);
-                        }
-                        else if (pos == "back") {
-                            if (obj[key].indexOf(str) == 0)
-                                set.add(obj);
-                        }
-                        else if (pos == "both")
-                            set.add(obj);
+                if (str.indexOf('*') == str.lastIndexOf('*')) {
+                    if (str.indexOf('*') == 0) {
+                        if (str.length == 1)
+                            reject(new Error("Invalid IS"));
+                        str = str.substring(str.indexOf('*') + 1);
+                        pos = 'front';
+                    }
+                    else {
+                        str = str.substring(0, str.indexOf('*'));
+                        pos = 'back';
                     }
                 }
-            }
 
-            if(flag == 0)
-                fulfill(set);
-            else
-                reject(new Error("Invalid IS key"));
+                else {
+                    str = str.substring(str.indexOf('*') + 1, str.lastIndexOf('*'));
+                    pos = 'both';
+                }
+
+                let flag = 1;
+                for (let obj of data) {
+                    if (obj.hasOwnProperty(key))
+                        if(typeof obj[key] === 'string') {
+                            flag = 0;
+                            if (obj[key].includes(str)) {
+                                if (pos == "front") {
+                                    if (obj[key].indexOf(str) == (obj[key].length - str.length))
+                                        set.add(obj);
+                                }
+                                else if (pos == "back") {
+                                    if (obj[key].indexOf(str) == 0)
+                                        set.add(obj);
+                                }
+                                else if (pos == "both")
+                                    set.add(obj);
+                            }
+                        }
+                }
+
+                if (flag == 0)
+                    fulfill(set);
+                else
+                    reject(new Error("Invalid IS key"));
+            }
+            catch(err) {
+                reject(err);
+            }
         })
     }
 
