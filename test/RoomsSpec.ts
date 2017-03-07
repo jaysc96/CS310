@@ -113,28 +113,38 @@ describe("RoomsSpec", function () {
 
     });
 
-    it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
+    it("perform d3 sample query A", function () {
         let query: QueryRequest = {
             "WHERE": {
-                "AND": [
-                    {
-                        "LT": {
-                            "rooms_seats": 100
-                        }
-                    }, {
-                        "IS": {
-                            "rooms_type": "Non-studio"
-                        }
-                    }]
-
-            },
+            "AND": [{
+                "IS": {
+                    "rooms_furniture": "*Tables*"
+                }
+            }, {
+                "GT": {
+                    "rooms_seats": 300
+                }
+            }]
+        },
             "OPTIONS": {
-                "COLUMNS": [
-                    "rooms_type", "rooms_name", "rooms_seats"
-                ],
-                "ORDER": "rooms_seats",
-                "FORM": "TABLE"
-            }
+            "COLUMNS": [
+                "rooms_shortname",
+                "maxSeats"
+            ],
+                "ORDER": {
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
+                },
+            "FORM": "TABLE"
+        },
+            "TRANSFORMATIONS": {
+            "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                "maxSeats": {
+                    "MAX": "rooms_seats"
+                }
+            }]
+        }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));

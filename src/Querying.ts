@@ -135,9 +135,11 @@ export default class Querying {
                 else {
                     let err: {missing: string[]} = {missing: []};
                     for (let col of columns) {
-                        let key = col.split('_')[0];
-                        if(key != that.id)
-                            err.missing.push(key);
+                        if(col.indexOf('_') != -1) {
+                            let key = col.split('_')[0];
+                            if (key != that.id)
+                                err.missing.push(key);
+                        }
                     }
                     if(err.missing.length > 0) {
                         reject(err);
@@ -173,12 +175,43 @@ export default class Querying {
                     else {
                         let dir = order.dir;
                         let keys = order.keys;
-                        for (let key of keys) {
-                            if(!columns.includes(key)) {
-                                reject(new Error("ORDER should be present in COLUMNS"));
+                        let key = keys[0];
+                        if(!columns.includes(key)) {
+                            reject(new Error("ORDER should be present in COLUMNS"));
+                        }
+                        else {
+                            if(typeof set.data[0][key] == 'number') {
+                                set.data.sort((a, b) => {
+                                    if (a[key] == b[key]) {
+                                        for(let j=1; j<keys.length; j++) {
+                                            if(a[keys[j]] != b[keys[j]]) {
+                                                key = keys[j];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if(dir == 'DOWN')
+                                        return b[key] - a[key];
+                                    else
+                                        return a[key] - b[key];
+                                });
                             }
-                            else {
 
+                            else {
+                                set.data.sort((a, b) => {
+                                    if (a[key] == b[key]) {
+                                        for(let j=1; j<keys.length; j++) {
+                                            if(a[keys[j]] != b[keys[j]]) {
+                                                key = keys[j];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if(dir == 'DOWN')
+                                        return a[key] > b[key] ? -1 : 1;
+                                    else
+                                        return a[key] < b[key] ? -1 : 1;
+                                });
                             }
                         }
                     }
@@ -240,46 +273,144 @@ export default class Querying {
         });
 
         for(let col of cols) {
-            if(col.indexOf('_') == -1)
-                if(!apkeys.includes(col))
+            if(col.indexOf('_') == -1) {
+                if (!apkeys.includes(col))
                     throw new Error('COLUMNS should have keys present in APPLY');
+            }
 
-            else
-                if(!grp.includes(col))
+            else {
+                if (!grp.includes(col)) {
+                    console.log(col.indexOf('_'));
                     throw new Error('COLUMNS should have keys present in GROUP');
+                }
+            }
         }
 
         if(set.data.length == 0)
             return set;
+        let arr: any;
+        try {
+            arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys, []);
+        }
+        catch(err) {
+            throw err;
+        }
 
-        dset = this.groupData(set.data, grp, aptknkeys, {});
+        if(grp.length == 1)
+            dset.data = arr;
+        else {
+            dset.data = this.flattenArray(arr, []);
+        }
         return dset;
     }
 
-    private groupData(data: any[], grp: string[], aptknkeys: string[], obj: Object): Dataset {
-        if(grp.length == 0)
-            return data;
-        else {
-            let g = grp[0];
-            let d: any[] = [];
 
-            for(let o of data) {
-                if(!d.includes(o[g]))
-                    d.push(o[g]);
+    private flattenArray(arr1: any[], arr2: any[]): any[] {
+        for(let a of arr1) {
+            if(a.isArray())
+                arr2.concat(this.flattenArray(a, arr2));
+            else
+                arr2.push(arr1);
+        }
+        return arr2;
+    }
+
+    private groupData(data: any[], grp: string[], i: number, apkeys: string[], aptkns: string[], aptknkeys: string[], obj: any[]): any {
+        try {
+            if (i == grp.length) {
+                return this.applyToGroup(data, apkeys, aptkns, aptknkeys);
             }
+            else {
+                let g = grp[i];
+                let d: any[] = [];
 
-            for(let val of d) {
-                let grp_data = data.filter(x => {
-                    return x[g] == val;
-                });
+                for (let o of data) {
+                    if (!d.includes(o[g]))
+                        d.push(o[g]);
+                }
 
-                grp_data.map(x => {
-                    let o: any = {};
-                    o[g] = x[g];
-                    
-                })
+                for (let val of d) {
+                    let grp_data = data.filter(x => {
+                        return x[g] == val;
+                    });
+
+                    grp_data = grp_data.map(x => {
+                        let o: any = {};
+                        for (let g of grp) {
+                            o[g] = x[g];
+                        }
+                        for (let key of aptknkeys) {
+                            o[key] = x[key];
+                        }
+                        return o;
+                    });
+
+                    obj.push(this.groupData(grp_data, grp, i + 1, apkeys, aptkns, aptknkeys, obj));
+                }
+                return obj;
             }
         }
+        catch(err) {
+            throw err;
+        }
+    }
+
+    private applyToGroup(data: any[], apkeys: string[], aptkns: string[], aptknkeys: string[]): any {
+        let c: any = {};
+        for(let i in apkeys) {
+
+            if(aptkns[i] == 'MAX') {
+                if (typeof data[0][aptknkeys[i]] == 'number') {
+                    data = data.sort((a, b) => {
+                        return a[aptknkeys[i]] - b[aptknkeys[i]];
+                    });
+                    let d = data[0];
+                    d[apkeys[i]] = d[aptknkeys[i]];
+                    Object.assign(c, d);
+                }
+                else
+                    throw new Error("To apply MAX keyvalue should be a number");
+            }
+
+            else if(aptkns[i] == 'MIN') {
+                if (typeof data[0][aptknkeys[i]] == 'number') {
+                    data = data.sort((a, b) => {
+                        return b[aptknkeys[i]] - a[aptknkeys[i]];
+                    });
+                    let d = data[0];
+                    d[apkeys[i]] = d[aptknkeys[i]];
+                    Object.assign(c, d);
+                }
+                else
+                    throw new Error("To apply MIN keyvalue should be a number");
+            }
+
+            else if(aptkns[i] == 'SUM'||'AVG') {
+                if (typeof data[0][aptknkeys[i]] == 'number') {
+                    let sum: number;
+                    for(let obj of data) {
+                        sum += obj[aptknkeys[i]];
+                    }
+                    Object.assign(c, data[0]);
+                    if(aptkns[i] == 'SUM')
+                        c[apkeys[i]] = Number(sum.toFixed(0));
+                    else {
+                        let avg = sum/data.length;
+                        c[apkeys[i]] = Number(avg.toFixed(2));
+                    }
+                }
+                else
+                    throw new Error("To apply SUM or AVG keyvalue should be a number");
+            }
+
+            else if(aptkns[i] == 'COUNT') {
+
+            }
+
+            else
+                throw new Error("Invalid Apply Token");
+        }
+        return c;
     }
 
     private filterAND(and: Where[]): Promise<Dataset> {
