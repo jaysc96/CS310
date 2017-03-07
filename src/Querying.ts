@@ -19,8 +19,22 @@ export interface Where {
 
 export interface Options {
     COLUMNS: string[],
-    ORDER?: string,
+    ORDER?: Order|string,
     FORM: string
+}
+
+export interface Order {
+    dir: 'UP'|'DOWN',
+    keys: string[]
+}
+
+export interface Transformations {
+    GROUP: string[]
+    APPLY: Apply[]
+}
+
+export interface Apply {
+    [id: string]: {[id: string]: string}
 }
 
 export interface QueryResponse {
@@ -43,7 +57,9 @@ export default class Querying {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                if (where.hasOwnProperty("AND")) {
+                if(Object.keys(where).length == 0)
+                    fulfill(that.dataSet);
+                else if (where.hasOwnProperty("AND")) {
                     that.filterAND(where.AND).then(function(dset) {
                         if (that.err.missing.length != 0)
                             reject(that.err);
@@ -104,6 +120,166 @@ export default class Querying {
                 reject(err);
             }
         });
+    }
+
+    public renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
+        let that = this;
+        return new Promise(function (fulfill, reject) {
+            try {
+                let columns = opt.COLUMNS;
+                let form = opt.FORM;
+                let order: any;
+
+                if (columns.length == 0)
+                    reject(new Error ("Empty COLUMNS"));
+                else {
+                    let err: {missing: string[]} = {missing: []};
+                    for (let col of columns) {
+                        let key = col.split('_')[0];
+                        if(key != that.id)
+                            err.missing.push(key);
+                    }
+                    if(err.missing.length > 0) {
+                        reject(err);
+                    }
+                }
+
+                if(opt.hasOwnProperty('ORDER')) {
+                    order = opt.ORDER;
+                    if(typeof order == 'string') {
+                        if (!columns.includes(order)) {
+                            reject(new Error("ORDER should be present in COLUMNS"));
+                        }
+                        else {
+                            if (set.data.length == 0)
+                                fulfill({render: form, result: []});
+                            try {
+                                if (typeof set.data[0][order] == 'number') {
+                                    set.data.sort(function (a, b) {
+                                        return a[order] - b[order];
+                                    });
+                                }
+                                else if (typeof set.data[0][order] == 'string') {
+                                    set.data.sort(function (a, b) {
+                                        return a[order] == b[order] ? 0 : a[order] < b[order] ? -1 : 1;
+                                    });
+                                }
+                            }
+                            catch (err) {
+                                reject(err);
+                            }
+                        }
+                    }
+                    else {
+                        let dir = order.dir;
+                        let keys = order.keys;
+                        for (let key of keys) {
+                            if(!columns.includes(key)) {
+                                reject(new Error("ORDER should be present in COLUMNS"));
+                            }
+                            else {
+
+                            }
+                        }
+                    }
+                }
+
+                if(form == "TABLE") {
+                    let render = form;
+                    let result: any[] = [];
+                    if(set.data.length == 0)
+                        fulfill({render: render, result: result});
+                    else {
+                        for (let data of set.data) {
+                            let c: any = {};
+                            for (let col of columns) {
+                                if (data.hasOwnProperty(col))
+                                    c[col] = data[col];
+                            }
+                            if (Object.keys(c).length == columns.length)
+                                result.push(c);
+                        }
+                        if (result.length == 0)
+                            reject(new Error("Invalid COLUMNS"));
+                        let qr: QueryResponse = {render: render, result: result};
+                        fulfill(qr);
+                    }
+                }
+                else
+                    reject(new Error("Invalid FORM"));
+            }
+            catch (err) {
+                reject(err);
+            }
+        })
+    }
+
+    public transform(tr: Transformations, opt: Options, set: Dataset): Dataset {
+        let dset = new Dataset();
+        let cols = opt.COLUMNS;
+        let order: any;
+
+        if(opt.ORDER)
+            order = opt.ORDER;
+        let grp = tr.GROUP;
+        let apply = tr.APPLY;
+
+        if(grp.length == 0)
+            throw new Error('Empty GROUPS');
+
+        let apkeys = apply.map(x => {
+            return Object.keys(x)[0];
+        });
+
+        let aptkns = apply.map((x,i) => {
+            return Object.keys(x[apkeys[i]])[0];
+        });
+
+        let aptknkeys = apply.map((x, i) => {
+            return x[apkeys[i]][aptkns[i]];
+        });
+
+        for(let col of cols) {
+            if(col.indexOf('_') == -1)
+                if(!apkeys.includes(col))
+                    throw new Error('COLUMNS should have keys present in APPLY');
+
+            else
+                if(!grp.includes(col))
+                    throw new Error('COLUMNS should have keys present in GROUP');
+        }
+
+        if(set.data.length == 0)
+            return set;
+
+        dset = this.groupData(set.data, grp, aptknkeys, {});
+        return dset;
+    }
+
+    private groupData(data: any[], grp: string[], aptknkeys: string[], obj: Object): Dataset {
+        if(grp.length == 0)
+            return data;
+        else {
+            let g = grp[0];
+            let d: any[] = [];
+
+            for(let o of data) {
+                if(!d.includes(o[g]))
+                    d.push(o[g]);
+            }
+
+            for(let val of d) {
+                let grp_data = data.filter(x => {
+                    return x[g] == val;
+                });
+
+                grp_data.map(x => {
+                    let o: any = {};
+                    o[g] = x[g];
+                    
+                })
+            }
+        }
     }
 
     private filterAND(and: Where[]): Promise<Dataset> {

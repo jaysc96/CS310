@@ -74,7 +74,17 @@ export default class InsightFacade implements IInsightFacade {
                     reject({code: 424, body: {missing: [key]}});
                 let qr = new Querying(that.dataStruct, key);
                 qr.getWhere(where).then(function (set) {
-                    that.renderOptions(options, set).then(function (qr) {
+                    if(query.hasOwnProperty('TRANSFORMATIONS')) {
+                        try {
+                            set = qr.transform(query.TRANSFORMATIONS, options, set);
+                        }
+                        catch(err) {
+                            if(err.hasOwnProperty('missing'))
+                                reject({code: 424, body: err});
+                            reject({code: 400, body: {error: err.message}});
+                        }
+                    }
+                    qr.renderOptions(options, set).then(function (qr) {
                         let render = qr.render;
                         let result = qr.result;
                         fulfill({code: 200, body: {render, result}});
@@ -185,6 +195,7 @@ export default class InsightFacade implements IInsightFacade {
                         reject(err);
                     })
                 }
+
                 else if(id == 'courses') {
                     zip.folder(id).forEach(function (relativePath, file) {
                         promises.push(file.async('string').then(JSON.parse).then(function (obj) {
@@ -318,81 +329,5 @@ export default class InsightFacade implements IInsightFacade {
     private removeFile(id: string) {
         let fs = require('fs');
         fs.unlinkSync('./data/' + id + ".json");
-    }
-
-    private renderOptions(opt: Options, set: Dataset): Promise<QueryResponse> {
-        let that = this;
-        return new Promise(function (fulfill, reject) {
-            try {
-                let columns = opt.COLUMNS;
-                let form = opt.FORM;
-                let order: string;
-
-                if (columns.length == 0)
-                    reject(new Error ("Empty COLUMNS"));
-                else {
-                    let err: {missing: string[]} = {missing: []};
-                    for (let col of columns) {
-                        let key = col.split('_')[0];
-                        if(!that.dataStruct.hasOwnProperty(key))
-                            err.missing.push(key);
-                    }
-                    if(err.missing.length > 0) {
-                        reject(err);
-                    }
-                }
-
-                if(opt.hasOwnProperty('ORDER')) {
-                    order = opt.ORDER;
-                    if (!columns.includes(order))
-                        reject(new Error("ORDER should be present in COLUMNS"));
-                    else {
-                        if(set.data.length == 0)
-                            fulfill({render: form, result: []});
-                        try {
-                            if(typeof set.data[0][order] == 'number') {
-                                set.data.sort(function (a, b) {
-                                    return a[order] - b[order];
-                                });
-                            }
-                            else if(typeof set.data[0][order] == 'string') {
-                                set.data.sort(function (a, b) {
-                                    return a[order] == b[order] ? 0 : a[order] < b[order] ? -1 : 1;
-                                });
-                            }
-                        }
-                        catch (err) {
-                            reject(err);
-                        }
-                    }
-                }
-
-                if(set.data.length == 0)
-                    fulfill({render: form, result: []});
-
-                if(form == "TABLE") {
-                    let render = form;
-                    let result: any[] = [];
-                    for(let data of set.data) {
-                        let c: any = {};
-                        for(let col of columns) {
-                            if(data.hasOwnProperty(col))
-                                c[col] = data[col];
-                        }
-                        if(Object.keys(c).length == columns.length)
-                            result.push(c);
-                    }
-                    if(result.length == 0)
-                        reject(new Error("Invalid COLUMNS"));
-                    let qr: QueryResponse = {render: render, result: result};
-                    fulfill(qr);
-                }
-                else
-                    reject(new Error("Invalid FORM"));
-            }
-            catch (err) {
-                reject(err);
-            }
-        })
     }
 }
