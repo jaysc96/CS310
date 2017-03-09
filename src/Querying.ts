@@ -232,8 +232,9 @@ export default class Querying {
                             if (Object.keys(c).length == columns.length)
                                 result.push(c);
                         }
-                        if (result.length == 0)
+                        if (result.length == 0) {
                             reject(new Error("Invalid COLUMNS"));
+                        }
                         let qr: QueryResponse = {render: render, result: result};
                         fulfill(qr);
                     }
@@ -250,27 +251,26 @@ export default class Querying {
     public transform(tr: Transformations, opt: Options, set: Dataset): Dataset {
         let dset = new Dataset();
         let cols = opt.COLUMNS;
-        let order: any;
-
-        if(opt.ORDER)
-            order = opt.ORDER;
         let grp = tr.GROUP;
         let apply = tr.APPLY;
+        let apkeys: string[] = [], aptkns: string[] = [], aptknkeys: string[] = [];
 
         if(grp.length == 0)
             throw new Error('Empty GROUPS');
 
-        let apkeys = apply.map(x => {
-            return Object.keys(x)[0];
-        });
+        if(apply.length > 0) {
+            apkeys = apply.map(x => {
+                return Object.keys(x)[0];
+            });
 
-        let aptkns = apply.map((x,i) => {
-            return Object.keys(x[apkeys[i]])[0];
-        });
+            aptkns = apply.map((x, i) => {
+                return Object.keys(x[apkeys[i]])[0];
+            });
 
-        let aptknkeys = apply.map((x, i) => {
-            return x[apkeys[i]][aptkns[i]];
-        });
+            aptknkeys = apply.map((x, i) => {
+                return x[apkeys[i]][aptkns[i]];
+            });
+        }
 
         for(let col of cols) {
             if(col.indexOf('_') == -1) {
@@ -278,11 +278,8 @@ export default class Querying {
                     throw new Error('COLUMNS should have keys present in APPLY');
             }
 
-            else {
-                if (!grp.includes(col)) {
-                    console.log(col.indexOf('_'));
-                    throw new Error('COLUMNS should have keys present in GROUP');
-                }
+            else if (!grp.includes(col)) {
+                throw new Error('COLUMNS should have keys present in GROUP');
             }
         }
 
@@ -296,21 +293,18 @@ export default class Querying {
             throw err;
         }
 
-        if(grp.length == 1)
-            dset.data = arr;
-        else {
-            dset.data = this.flattenArray(arr, []);
-        }
+        dset.data = arr;
         return dset;
     }
 
 
-    private flattenArray(arr1: any[], arr2: any[]): any[] {
-        for(let a of arr1) {
-            if(a.isArray())
-                arr2.concat(this.flattenArray(a, arr2));
+    private flattenArray(arr: any): any {
+        let arr2: any[] = [];
+        for(let a of arr) {
+            if(Array.isArray(a))
+                arr2.concat(this.flattenArray(a));
             else
-                arr2.push(arr1);
+                arr2.push(arr);
         }
         return arr2;
     }
@@ -347,6 +341,8 @@ export default class Querying {
 
                     obj.push(this.groupData(grp_data, grp, i + 1, apkeys, aptkns, aptknkeys, obj));
                 }
+                if(Array.isArray(obj[0]))
+                    obj = this.flattenArray(obj);
                 return obj;
             }
         }
@@ -357,6 +353,10 @@ export default class Querying {
 
     private applyToGroup(data: any[], apkeys: string[], aptkns: string[], aptknkeys: string[]): any {
         let c: any = {};
+        if(aptknkeys.length == 0) {
+            Object.assign(c, data[0]);
+            return c;
+        }
         for(let i in apkeys) {
 
             if(aptkns[i] == 'MAX') {

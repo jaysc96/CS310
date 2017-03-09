@@ -155,6 +155,31 @@ describe("RoomsSpec", function () {
         });
     });
 
+    it("perform d3 sample query B", function () {
+        let query: QueryRequest = {
+            "WHERE": {},
+            "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_furniture",
+                    "rooms_shortname"
+                ],
+                "ORDER": "rooms_shortname",
+                "FORM": "TABLE"
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["rooms_furniture", "rooms_shortname"],
+                "APPLY": []
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr.body));
+            expect(inr.code).to.equal(200)
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        });
+    });
+
     it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
         let query: QueryRequest = {
             "WHERE": {
