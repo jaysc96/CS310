@@ -119,18 +119,19 @@ describe("RoomsSpec", function () {
             "OPTIONS": {
                 "COLUMNS": [
                     "rooms_furniture",
-                    "countSeats", "rooms_type"
+                    "rooms_type",
+                    "countThings"
                 ],
                 "ORDER": {
                     "dir" : "UP",
-                    "keys" : ["rooms_furniture", "countSeats"]
+                    "keys" : ["rooms_furniture"]
                 },
                 "FORM": "TABLE"
             },
             "TRANSFORMATIONS": {
                 "GROUP": ["rooms_furniture", "rooms_type"],
                 "APPLY": [{
-                    "countSeats": {
+                    "countThings": {
                         "COUNT": "rooms_seats"
                     }
                 }]

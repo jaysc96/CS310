@@ -175,50 +175,54 @@ export default class Querying {
                     else {
                         let dir = order.dir;
                         let keys = order.keys;
-                        let key = keys[0];
-                        if(!columns.includes(key)) {
-                            reject(new Error("ORDER should be present in COLUMNS"));
+                        for(let key of keys)
+                        {
+                            if(!columns.includes(key))
+                                return reject(new Error("ORDER should be present in COLUMNS"));
                         }
-                        else {
-                            if(typeof set.data[0][key] == 'number') {
-                                set.data.sort((a, b) => {
-                                    if (a[key] == b[key]) {
-                                        for(let j=1; j<keys.length; j++) {
-                                            if(a[keys[j]] != b[keys[j]]) {
-                                                key = keys[j];
-                                                break;
-                                            }
+                        let key = keys[0];
+                        if(typeof set.data[0][key] == 'number') {
+                            set.data.sort((a, b) => {
+                                if (a[key] == b[key]) {
+                                    for(let j=1; j<keys.length; j++) {
+                                        if(a[keys[j]] != b[keys[j]]) {
+                                            if (dir == 'DOWN')
+                                                return b[keys[j]] - a[keys[j]];
+                                            else
+                                                return a[keys[j]] - b[keys[j]];
                                         }
                                     }
-                                    if(dir == 'DOWN')
-                                        return b[key] - a[key];
-                                    else
-                                        return a[key] - b[key];
-                                });
-                            }
+                                }
+                                if(dir == 'DOWN')
+                                    return b[key] - a[key];
+                                else
+                                    return a[key] - b[key];
+                            });
+                        }
 
-                            else {
-                                set.data.sort((a, b) => {
-                                    if (a[key] == b[key]) {
-                                        for(let j=1; j<keys.length; j++) {
-                                            if(a[keys[j]] != b[keys[j]]) {
-                                                key = keys[j];
-                                                break;
-                                            }
+                        else {
+                            set.data.sort((a, b) => {
+                                if (a[key] == b[key]) {
+                                    for(let j=1; j<keys.length; j++) {
+                                        if(a[keys[j]] != b[keys[j]]) {
+                                            if(dir == 'DOWN')
+                                                return a[keys[j]] > b[keys[j]] ? -1 : 1;
+                                            else
+                                                return a[keys[j]] < b[keys[j]] ? -1 : 1;
                                         }
                                     }
-                                    if(dir == 'DOWN')
-                                        return a[key] > b[key] ? -1 : 1;
-                                    else
-                                        return a[key] < b[key] ? -1 : 1;
-                                });
-                            }
+                                }
+                                if(dir == 'DOWN')
+                                    return a[key] > b[key] ? -1 : 1;
+                                else
+                                    return a[key] < b[key] ? -1 : 1;
+                            });
                         }
                     }
                 }
 
-                if(form == "TABLE") {
-                    let render = form;
+            if(form == "TABLE") {
+                let render = form;
                     let result: any[] = [];
                     if(set.data.length == 0)
                         fulfill({render: render, result: result});
@@ -258,6 +262,15 @@ export default class Querying {
         if(grp.length == 0)
             throw new Error('Empty GROUPS');
 
+        for(let g of grp) {
+            if(g.indexOf('_') !== -1) {
+                let key = g.split('_')[0];
+                if(key != this.id) {
+                    this.err.missing.push(key);
+                }
+            }
+        }
+
         if(apply.length > 0) {
             apkeys = apply.map(x => {
                 return Object.keys(x)[0];
@@ -270,16 +283,36 @@ export default class Querying {
             aptknkeys = apply.map((x, i) => {
                 return x[apkeys[i]][aptkns[i]];
             });
+
+            if((new Set(apkeys)).size !== apkeys.length)
+                throw new Error("Apply cannot have duplicates");
+
+            for(let i in apkeys) {
+                if(apkeys[i].indexOf('_') !== -1)
+                    throw new Error("Invalid Apply key");
+                else {
+                    let tkey = aptknkeys[i];
+                    if(tkey.indexOf('_') == -1) {
+                        throw new Error("Invalid Apply token key");
+                    }
+                    else if(tkey.split('_')[0] !== this.id) {
+                        this.err.missing.push(tkey.split('_')[0]);
+                    }
+                }
+            }
         }
+
+        if(this.err.missing.length > 0)
+            throw this.err;
 
         for(let col of cols) {
             if(col.indexOf('_') == -1) {
                 if (!apkeys.includes(col))
-                    throw new Error('COLUMNS should have keys present in APPLY');
+                    throw new Error('COLUMNS should have key present in APPLY');
             }
 
             else if (!grp.includes(col)) {
-                throw new Error('COLUMNS should have keys present in GROUP');
+                throw new Error('COLUMNS should have key present in GROUP');
             }
         }
 
@@ -290,7 +323,6 @@ export default class Querying {
             arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys);
             if(grp.length > 1)
                 arr = [].concat.apply([], arr);
-            console.log(arr.length);
         }
         catch(err) {
             throw err;
@@ -311,10 +343,8 @@ export default class Querying {
                 let obj: any[] = [];
 
                 for (let o of data) {
-                    if(o[g]) {
-                        if (!d.includes(o[g])) {
-                            d.push(o[g]);
-                        }
+                    if (!d.includes(o[g])) {
+                        d.push(o[g]);
                     }
                 }
 
@@ -354,6 +384,7 @@ export default class Querying {
         for(let i in apkeys) {
 
             if(aptkns[i] == 'MIN') {
+                console.log(2);
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     data = data.sort((a, b) => {
                         return a[aptknkeys[i]] - b[aptknkeys[i]];
@@ -375,21 +406,23 @@ export default class Querying {
                     throw new Error("To apply MIN keyvalue should be a number");
             }
 
-            else if(aptkns[i] == 'SUM'||'AVG') {
+            else if(aptkns[i] == 'SUM'|| aptkns[i] =='AVG') {
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     let sum: number = 0;
+                    let total: number = 0;
                     for(let obj of data) {
-                        let x = (obj[aptknkeys[i]]*10);
-                        x = Number(x.toFixed(0));
+                        let x = obj[aptknkeys[i]];
                         sum += x;
+                        x *= 10;
+                        x = Number(x.toFixed(0));
+                        total += x;
                     }
 
                     if(aptkns[i] == 'SUM') {
-                        sum /= 10;
-                        c[apkeys[i]] = Number(sum.toFixed(0));
+                        c[apkeys[i]] = sum;
                     }
                     else {
-                        let avg = sum/data.length;
+                        let avg = total/data.length;
                         avg /= 10;
                         c[apkeys[i]] = Number(avg.toFixed(2));
                     }
@@ -401,7 +434,7 @@ export default class Querying {
             else if(aptkns[i] == 'COUNT') {
                 let d: any[] = [];
                 for (let obj of data) {
-                    if(obj[aptknkeys[i]]) {
+                    if (obj[aptknkeys[i]]) {
                         if (!d.includes(obj[aptknkeys[i]]))
                             d.push(obj[aptknkeys[i]]);
                     }

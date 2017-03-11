@@ -69,7 +69,11 @@ export default class InsightFacade implements IInsightFacade {
             try {
                 let where: Where = query.WHERE;
                 let options: Options = query.OPTIONS;
-                let key = options.COLUMNS[0].split('_')[0];
+                let key: string = "";
+                for(let col of options.COLUMNS) {
+                    if(col.indexOf('_') != -1)
+                        key = col.split('_')[0];
+                }
                 if (!that.dataStruct.hasOwnProperty(key))
                     reject({code: 424, body: {missing: [key]}});
                 let qr = new Querying(that.dataStruct, key);
