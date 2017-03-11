@@ -384,7 +384,6 @@ export default class Querying {
         for(let i in apkeys) {
 
             if(aptkns[i] == 'MIN') {
-                console.log(2);
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     data = data.sort((a, b) => {
                         return a[aptknkeys[i]] - b[aptknkeys[i]];
@@ -392,7 +391,7 @@ export default class Querying {
                     c[apkeys[i]] = data[0][aptknkeys[i]];
                 }
                 else
-                    throw new Error("To apply MAX keyvalue should be a number");
+                    throw new Error("To apply MAX, key value should be a number");
             }
 
             else if(aptkns[i] == 'MAX') {
@@ -403,10 +402,10 @@ export default class Querying {
                     c[apkeys[i]] = data[0][aptknkeys[i]];
                 }
                 else
-                    throw new Error("To apply MIN keyvalue should be a number");
+                    throw new Error("To apply MIN, key value should be a number");
             }
 
-            else if(aptkns[i] == 'SUM'|| aptkns[i] =='AVG') {
+            else if(aptkns[i] == 'SUM' || aptkns[i] =='AVG') {
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     let sum: number = 0;
                     let total: number = 0;
@@ -428,7 +427,7 @@ export default class Querying {
                     }
                 }
                 else
-                    throw new Error("To apply SUM or AVG keyvalue should be a number");
+                    throw new Error("To apply SUM or AVG, key value should be a number");
             }
 
             else if(aptkns[i] == 'COUNT') {
