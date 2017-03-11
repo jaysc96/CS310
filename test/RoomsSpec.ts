@@ -78,7 +78,7 @@ describe("RoomsSpec", function () {
                 "ORDER":"rooms_name",
                 "FORM":"TABLE"
             }
-        };;
+        };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));
             expect(inr.code).to.equal(200)
@@ -115,36 +115,26 @@ describe("RoomsSpec", function () {
 
     it("perform d3 sample query A", function () {
         let query: QueryRequest = {
-            "WHERE": {
-            "AND": [{
-                "IS": {
-                    "rooms_furniture": "*Tables*"
-                }
-            }, {
-                "GT": {
-                    "rooms_seats": 300
-                }
-            }]
-        },
+            "WHERE": {},
             "OPTIONS": {
-            "COLUMNS": [
-                "rooms_shortname",
-                "maxSeats"
-            ],
+                "COLUMNS": [
+                    "rooms_furniture",
+                    "countSeats", "rooms_type"
+                ],
                 "ORDER": {
-                    "dir": "DOWN",
-                    "keys": ["maxSeats"]
+                    "dir" : "UP",
+                    "keys" : ["rooms_furniture", "countSeats"]
                 },
-            "FORM": "TABLE"
-        },
+                "FORM": "TABLE"
+            },
             "TRANSFORMATIONS": {
-            "GROUP": ["rooms_shortname"],
+                "GROUP": ["rooms_furniture", "rooms_type"],
                 "APPLY": [{
-                "maxSeats": {
-                    "MAX": "rooms_seats"
-                }
-            }]
-        }
+                    "countSeats": {
+                        "COUNT": "rooms_seats"
+                    }
+                }]
+            }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));
@@ -155,6 +145,7 @@ describe("RoomsSpec", function () {
         });
     });
 
+    /*
     it("perform d3 sample query B", function () {
         let query: QueryRequest = {
             "WHERE": {},
@@ -179,6 +170,7 @@ describe("RoomsSpec", function () {
             expect.fail();
         });
     });
+    */
 
     it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
         let query: QueryRequest = {

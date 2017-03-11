@@ -287,7 +287,10 @@ export default class Querying {
             return set;
         let arr: any;
         try {
-            arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys, []);
+            arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys);
+            if(grp.length > 1)
+                arr = [].concat.apply([], arr);
+            console.log(arr.length);
         }
         catch(err) {
             throw err;
@@ -297,38 +300,28 @@ export default class Querying {
         return dset;
     }
 
-
-    private flattenArray(arr: any): any {
-        let arr2: any[] = [];
-        for(let a of arr) {
-            if(Array.isArray(a))
-                arr2.concat(this.flattenArray(a));
-            else
-                arr2.push(arr);
-        }
-        return arr2;
-    }
-
-    private groupData(data: any[], grp: string[], i: number, apkeys: string[], aptkns: string[], aptknkeys: string[], obj: any[]): any {
+    private groupData(data: any[], grp: string[], i: number, apkeys: string[], aptkns: string[], aptknkeys: string[]): any {
         try {
             if (i == grp.length) {
-                return this.applyToGroup(data, apkeys, aptkns, aptknkeys);
+                return this.applyToGroup(data, apkeys, aptkns, aptknkeys, grp);
             }
             else {
                 let g = grp[i];
                 let d: any[] = [];
+                let obj: any[] = [];
 
                 for (let o of data) {
-                    if (!d.includes(o[g]))
-                        d.push(o[g]);
+                    if(o[g]) {
+                        if (!d.includes(o[g])) {
+                            d.push(o[g]);
+                        }
+                    }
                 }
 
                 for (let val of d) {
                     let grp_data = data.filter(x => {
                         return x[g] == val;
-                    });
-
-                    grp_data = grp_data.map(x => {
+                    }).map(x => {
                         let o: any = {};
                         for (let g of grp) {
                             o[g] = x[g];
@@ -338,11 +331,9 @@ export default class Querying {
                         }
                         return o;
                     });
-
-                    obj.push(this.groupData(grp_data, grp, i + 1, apkeys, aptkns, aptknkeys, obj));
+                    let arr = this.groupData(grp_data, grp, i + 1, apkeys, aptkns, aptknkeys);
+                    obj.push(arr);
                 }
-                if(Array.isArray(obj[0]))
-                    obj = this.flattenArray(obj);
                 return obj;
             }
         }
@@ -351,35 +342,34 @@ export default class Querying {
         }
     }
 
-    private applyToGroup(data: any[], apkeys: string[], aptkns: string[], aptknkeys: string[]): any {
+    private applyToGroup(data: any[], apkeys: string[], aptkns: string[], aptknkeys: string[], grp: string[]): any {
         let c: any = {};
-        if(aptknkeys.length == 0) {
-            Object.assign(c, data[0]);
-            return c;
+        for (let g of grp) {
+            c[g] = data[0][g];
         }
+
+        if(aptknkeys.length == 0)
+            return c;
+
         for(let i in apkeys) {
 
-            if(aptkns[i] == 'MAX') {
+            if(aptkns[i] == 'MIN') {
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     data = data.sort((a, b) => {
                         return a[aptknkeys[i]] - b[aptknkeys[i]];
                     });
-                    let d = data[0];
-                    d[apkeys[i]] = d[aptknkeys[i]];
-                    Object.assign(c, d);
+                    c[apkeys[i]] = data[0][aptknkeys[i]];
                 }
                 else
                     throw new Error("To apply MAX keyvalue should be a number");
             }
 
-            else if(aptkns[i] == 'MIN') {
+            else if(aptkns[i] == 'MAX') {
                 if (typeof data[0][aptknkeys[i]] == 'number') {
                     data = data.sort((a, b) => {
                         return b[aptknkeys[i]] - a[aptknkeys[i]];
                     });
-                    let d = data[0];
-                    d[apkeys[i]] = d[aptknkeys[i]];
-                    Object.assign(c, d);
+                    c[apkeys[i]] = data[0][aptknkeys[i]];
                 }
                 else
                     throw new Error("To apply MIN keyvalue should be a number");
@@ -387,15 +377,20 @@ export default class Querying {
 
             else if(aptkns[i] == 'SUM'||'AVG') {
                 if (typeof data[0][aptknkeys[i]] == 'number') {
-                    let sum: number;
+                    let sum: number = 0;
                     for(let obj of data) {
-                        sum += obj[aptknkeys[i]];
+                        let x = (obj[aptknkeys[i]]*10);
+                        x = Number(x.toFixed(0));
+                        sum += x;
                     }
-                    Object.assign(c, data[0]);
-                    if(aptkns[i] == 'SUM')
+
+                    if(aptkns[i] == 'SUM') {
+                        sum /= 10;
                         c[apkeys[i]] = Number(sum.toFixed(0));
+                    }
                     else {
                         let avg = sum/data.length;
+                        avg /= 10;
                         c[apkeys[i]] = Number(avg.toFixed(2));
                     }
                 }
@@ -404,7 +399,14 @@ export default class Querying {
             }
 
             else if(aptkns[i] == 'COUNT') {
-
+                let d: any[] = [];
+                for (let obj of data) {
+                    if(obj[aptknkeys[i]]) {
+                        if (!d.includes(obj[aptknkeys[i]]))
+                            d.push(obj[aptknkeys[i]]);
+                    }
+                }
+                c[apkeys[i]] = d.length;
             }
 
             else
