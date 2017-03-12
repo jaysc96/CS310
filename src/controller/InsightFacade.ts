@@ -212,7 +212,7 @@ export default class InsightFacade implements IInsightFacade {
                             for (let res of obj.result) {
                                 if (res.Course) {
                                     let c: any = {};
-                                    c[id + '_uuid'] = res.id;
+                                    c[id + '_uuid'] = res.id.toString();
                                     c[id + '_id'] = res.Course;
                                     c[id + '_dept'] = res.Subject;
                                     c[id + '_title'] = res.Title;

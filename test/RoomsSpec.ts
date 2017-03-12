@@ -165,7 +165,7 @@ describe("RoomsSpec", function () {
                 ],
                 "ORDER": {
                     "dir": "UP",
-                    "keys": ["rooms_shortname"]
+                    "keys": ["sumSeats", "rooms_shortname"]
                 },
                 "FORM": "TABLE"
             },

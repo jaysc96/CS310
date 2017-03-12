@@ -242,27 +242,37 @@ describe("CoursesSpec", function () {
             });
     });
 
-    it("do not perform invalid query", function () {
+    it("perform transformations query", function () {
         let query = {
-            "WHERE":{
-            },
+            "WHERE":{},
             "OPTIONS": {
                 "COLUMNS": [
                     "courses_dept",
-                    "courses_sys",
-                    "courses_avg",
-                    "courses_uuid"
+                    "maxAvg",
+                    "sumAvg"
                 ],
-                "ORDER": "courses_avg",
+                "ORDER": "sumAvg",
                 "FORM": "TABLE"
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["courses_dept"],
+                "APPLY": [{
+                    "maxAvg": {
+                        "MAX": "courses_avg"
+                    }
+                }, {
+                    "sumAvg": {
+                        "SUM": "courses_avg"
+                    }
+                }]
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
             Log.error(JSON.stringify(inr));
             expect.fail();
-        }).catch(function (inr: InsightResponse) {
-            Log.test(JSON.stringify(inr));
-            expect(inr.code).to.equal(400);
         });
     });
 
