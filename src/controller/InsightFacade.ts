@@ -70,12 +70,18 @@ export default class InsightFacade implements IInsightFacade {
                 let where: Where = query.WHERE;
                 let options: Options = query.OPTIONS;
                 let key: string = "";
+
                 for(let col of options.COLUMNS) {
                     if(col.indexOf('_') != -1)
                         key = col.split('_')[0];
                 }
+
+                if (key == "")
+                    key = query.TRANSFORMATIONS.GROUP[0].split('_')[0];
+
                 if (!that.dataStruct.hasOwnProperty(key))
                     reject({code: 424, body: {missing: [key]}});
+
                 let qr = new Querying(that.dataStruct, key);
                 qr.getWhere(where).then(function (set) {
                     if(query.hasOwnProperty('TRANSFORMATIONS')) {
@@ -84,7 +90,7 @@ export default class InsightFacade implements IInsightFacade {
                         }
                         catch(err) {
                             if(err.hasOwnProperty('missing'))
-                                reject({code: 424, body: err});
+                                return reject({code: 424, body: err});
                             reject({code: 400, body: {error: err.message}});
                         }
                     }
@@ -94,12 +100,12 @@ export default class InsightFacade implements IInsightFacade {
                         fulfill({code: 200, body: {render, result}});
                     }).catch(function (err) {
                         if (err.hasOwnProperty("missing"))
-                            reject({code: 424, body: err});
+                            return reject({code: 424, body: err});
                         reject({code: 400, body: {error: err.message}})
                     })
                 }).catch(function (err) {
                     if (err.hasOwnProperty("missing"))
-                        reject({code: 424, body: err});
+                        return reject({code: 424, body: err});
                     reject({code: 400, body: {error: err.message}});
                 });
             }

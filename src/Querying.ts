@@ -30,7 +30,7 @@ export interface Order {
 
 export interface Transformations {
     GROUP: string[]
-    APPLY: Apply[]
+    APPLY: any[]
 }
 
 export interface Apply {
@@ -253,83 +253,88 @@ export default class Querying {
     }
 
     public transform(tr: Transformations, opt: Options, set: Dataset): Dataset {
-        let dset = new Dataset();
-        let cols = opt.COLUMNS;
-        let grp = tr.GROUP;
-        let apply = tr.APPLY;
-        let apkeys: string[] = [], aptkns: string[] = [], aptknkeys: string[] = [];
-
-        if(grp.length == 0)
-            throw new Error('Empty GROUPS');
-
-        for(let g of grp) {
-            if(g.indexOf('_') !== -1) {
-                let key = g.split('_')[0];
-                if(key != this.id) {
-                    this.err.missing.push(key);
-                }
-            }
-        }
-
-        if(apply.length > 0) {
-            apkeys = apply.map(x => {
-                return Object.keys(x)[0];
-            });
-
-            aptkns = apply.map((x, i) => {
-                return Object.keys(x[apkeys[i]])[0];
-            });
-
-            aptknkeys = apply.map((x, i) => {
-                return x[apkeys[i]][aptkns[i]];
-            });
-
-            if((new Set(apkeys)).size !== apkeys.length)
-                throw new Error("Apply cannot have duplicates");
-
-            for(let i in apkeys) {
-                if(apkeys[i].indexOf('_') !== -1)
-                    throw new Error("Invalid Apply key");
-                else {
-                    let tkey = aptknkeys[i];
-                    if(tkey.indexOf('_') == -1) {
-                        throw new Error("Invalid Apply token key");
-                    }
-                    else if(tkey.split('_')[0] !== this.id) {
-                        this.err.missing.push(tkey.split('_')[0]);
-                    }
-                }
-            }
-        }
-
-        if(this.err.missing.length > 0)
-            throw this.err;
-
-        for(let col of cols) {
-            if(col.indexOf('_') == -1) {
-                if (!apkeys.includes(col))
-                    throw new Error('COLUMNS should have key present in APPLY');
-            }
-
-            else if (!grp.includes(col)) {
-                throw new Error('COLUMNS should have key present in GROUP');
-            }
-        }
-
-        if(set.data.length == 0)
-            return set;
-        let arr: any;
         try {
+            let dset = new Dataset();
+            let cols = opt.COLUMNS;
+            let grp = tr.GROUP;
+            let apply = tr.APPLY;
+            let apkeys: string[] = [], aptkns: string[] = [], aptknkeys: string[] = [];
+
+            if (grp.length == 0)
+                throw new Error('Empty GROUPS');
+
+            for (let g of grp) {
+                if (g.indexOf('_') !== -1) {
+                    let key = g.split('_')[0];
+                    if (key != this.id) {
+                        this.err.missing.push(key);
+                    }
+                    else if(!set.data[0].hasOwnProperty(g))
+                        throw new Error("Invalid Group key");
+                }
+            }
+
+            if (apply.length > 0) {
+                apkeys = apply.map(x => {
+                    return Object.keys(x)[0];
+                });
+
+                aptkns = apply.map((x, i) => {
+                    return Object.keys(x[apkeys[i]])[0];
+                });
+
+                aptknkeys = apply.map((x, i) => {
+                    return x[apkeys[i]][aptkns[i]];
+                });
+
+                if ((new Set(apkeys)).size !== apkeys.length)
+                    throw new Error("Apply cannot have duplicates");
+
+                for (let i in apkeys) {
+                    if (apkeys[i].indexOf('_') !== -1)
+                        throw new Error("Invalid Apply key");
+                    else {
+                        let tkey = aptknkeys[i];
+                        if (tkey.indexOf('_') == -1) {
+                            throw new Error("Invalid Apply token key");
+                        }
+                        else if (tkey.split('_')[0] !== this.id) {
+                            this.err.missing.push(tkey.split('_')[0]);
+                        }
+                        else if (!set.data[0].hasOwnProperty(tkey)) {
+                            throw new Error("Invalid key to Apply");
+                        }
+                    }
+                }
+            }
+
+            if (this.err.missing.length > 0)
+                throw this.err;
+
+            for (let col of cols) {
+                if (col.indexOf('_') == -1) {
+                    if (!apkeys.includes(col))
+                        throw new Error('COLUMNS should have key present in APPLY');
+                }
+
+                else if (!grp.includes(col)) {
+                    throw new Error('COLUMNS should have key present in GROUP');
+                }
+            }
+
+            if (set.data.length == 0)
+                return set;
+            let arr: any;
             arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys);
-            if(grp.length > 1)
+            if (grp.length > 1)
                 arr = [].concat.apply([], arr);
+
+            dset.data = arr;
+            return dset;
         }
         catch(err) {
             throw err;
         }
-
-        dset.data = arr;
-        return dset;
     }
 
     private groupData(data: any[], grp: string[], i: number, apkeys: string[], aptkns: string[], aptknkeys: string[]): any {
@@ -373,78 +378,81 @@ export default class Querying {
     }
 
     private applyToGroup(data: any[], apkeys: string[], aptkns: string[], aptknkeys: string[], grp: string[]): any {
-        let c: any = {};
-        for (let g of grp) {
-            c[g] = data[0][g];
-        }
-
-        if(aptknkeys.length == 0)
-            return c;
-
-        for(let i in apkeys) {
-
-            if(aptkns[i] == 'MIN') {
-                if (typeof data[0][aptknkeys[i]] == 'number') {
-                    data = data.sort((a, b) => {
-                        return a[aptknkeys[i]] - b[aptknkeys[i]];
-                    });
-                    c[apkeys[i]] = data[0][aptknkeys[i]];
-                }
-                else
-                    throw new Error("To apply MAX, key value should be a number");
+        try {
+            let c: any = {};
+            for (let g of grp) {
+                c[g] = data[0][g];
             }
 
-            else if(aptkns[i] == 'MAX') {
-                if (typeof data[0][aptknkeys[i]] == 'number') {
-                    data = data.sort((a, b) => {
-                        return b[aptknkeys[i]] - a[aptknkeys[i]];
-                    });
-                    c[apkeys[i]] = data[0][aptknkeys[i]];
+            if (aptknkeys.length == 0)
+                return c;
+
+            for (let i in apkeys) {
+
+                if (aptkns[i] == 'MIN') {
+                    if (typeof data[0][aptknkeys[i]] == 'number') {
+                        data = data.sort((a, b) => {
+                            return a[aptknkeys[i]] - b[aptknkeys[i]];
+                        });
+                        c[apkeys[i]] = data[0][aptknkeys[i]];
+                    }
+                    else
+                        throw new Error("To apply MAX, key value should be a number");
                 }
-                else
-                    throw new Error("To apply MIN, key value should be a number");
-            }
 
-            else if(aptkns[i] == 'SUM' || aptkns[i] =='AVG') {
-                if (typeof data[0][aptknkeys[i]] == 'number') {
-                    let sum: number = 0;
-                    let total: number = 0;
-                    for(let obj of data) {
-                        let x = obj[aptknkeys[i]];
-                        sum += x;
-                        x *= 10;
-                        x = Number(x.toFixed(0));
-                        total += x;
+                else if (aptkns[i] == 'MAX') {
+                    if (typeof data[0][aptknkeys[i]] == 'number') {
+                        data = data.sort((a, b) => {
+                            return b[aptknkeys[i]] - a[aptknkeys[i]];
+                        });
+                        c[apkeys[i]] = data[0][aptknkeys[i]];
                     }
-
-                    if(aptkns[i] == 'SUM') {
-                        c[apkeys[i]] = sum;
-                    }
-                    else {
-                        let avg = total/data.length;
-                        avg /= 10;
-                        c[apkeys[i]] = Number(avg.toFixed(2));
-                    }
+                    else
+                        throw new Error("To apply MIN, key value should be a number");
                 }
-                else
-                    throw new Error("To apply SUM or AVG, key value should be a number");
-            }
 
-            else if(aptkns[i] == 'COUNT') {
-                let d: any[] = [];
-                for (let obj of data) {
-                    if (obj[aptknkeys[i]]) {
+                else if (aptkns[i] == 'SUM' || aptkns[i] == 'AVG') {
+                    if (typeof data[0][aptknkeys[i]] == 'number') {
+                        let sum: number = 0;
+                        let total: number = 0;
+                        for (let obj of data) {
+                            let x = obj[aptknkeys[i]];
+                            sum = sum + x;
+                            x = x * 10;
+                            x = Number(x.toFixed(0));
+                            total = total + x;
+                        }
+
+                        if (aptkns[i] == 'SUM') {
+                            c[apkeys[i]] = sum;
+                        }
+                        else {
+                            let avg = total / data.length;
+                            avg /= 10;
+                            c[apkeys[i]] = Number(avg.toFixed(2));
+                        }
+                    }
+                    else
+                        throw new Error("To apply SUM or AVG, key value should be a number");
+                }
+
+                else if (aptkns[i] == 'COUNT') {
+                    let d: any[] = [];
+                    for (let obj of data) {
                         if (!d.includes(obj[aptknkeys[i]]))
                             d.push(obj[aptknkeys[i]]);
                     }
+                    c[apkeys[i]] = d.length;
                 }
-                c[apkeys[i]] = d.length;
-            }
 
-            else
-                throw new Error("Invalid Apply Token");
+                else
+                    throw new Error("Invalid Apply Token");
+            }
+            return c;
         }
-        return c;
+        catch(err) {
+            throw err;
+        }
     }
 
     private filterAND(and: Where[]): Promise<Dataset> {

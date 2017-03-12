@@ -115,24 +115,33 @@ describe("RoomsSpec", function () {
 
     it("perform d3 sample query A", function () {
         let query: QueryRequest = {
-            "WHERE": {},
+            "WHERE": {
+                "AND": [{
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                }, {
+                    "GT": {
+                        "rooms_seats": 300
+                    }
+                }]
+            },
             "OPTIONS": {
                 "COLUMNS": [
-                    "rooms_furniture",
-                    "rooms_type",
-                    "countThings"
+                    "rooms_shortname",
+                    "maxSeats"
                 ],
                 "ORDER": {
-                    "dir" : "UP",
-                    "keys" : ["rooms_furniture"]
+                    "dir": "DOWN",
+                    "keys": ["maxSeats"]
                 },
                 "FORM": "TABLE"
             },
             "TRANSFORMATIONS": {
-                "GROUP": ["rooms_furniture", "rooms_type"],
+                "GROUP": ["rooms_shortname"],
                 "APPLY": [{
-                    "countThings": {
-                        "COUNT": "rooms_seats"
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
                     }
                 }]
             }
@@ -146,21 +155,27 @@ describe("RoomsSpec", function () {
         });
     });
 
-    /*
     it("perform d3 sample query B", function () {
         let query: QueryRequest = {
             "WHERE": {},
             "OPTIONS": {
                 "COLUMNS": [
-                    "rooms_furniture",
-                    "rooms_shortname"
+                    "rooms_shortname",
+                    "sumSeats"
                 ],
-                "ORDER": "rooms_shortname",
+                "ORDER": {
+                    "dir": "UP",
+                    "keys": ["rooms_shortname"]
+                },
                 "FORM": "TABLE"
             },
             "TRANSFORMATIONS": {
-                "GROUP": ["rooms_furniture", "rooms_shortname"],
-                "APPLY": []
+                "GROUP": ["rooms_shortname"],
+                "APPLY": [{
+                    "sumSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                }]
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
@@ -171,7 +186,7 @@ describe("RoomsSpec", function () {
             expect.fail();
         });
     });
-    */
+
 
     it("Find all non-studio type rooms with certain number of seats, excluding a specific building", function () {
         let query: QueryRequest = {
