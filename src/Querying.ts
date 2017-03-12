@@ -30,7 +30,7 @@ export interface Order {
 
 export interface Transformations {
     GROUP: string[]
-    APPLY: any[]
+    APPLY: Apply[]
 }
 
 export interface Apply {
@@ -181,42 +181,47 @@ export default class Querying {
                                 return reject(new Error("ORDER should be present in COLUMNS"));
                         }
                         let key = keys[0];
-                        if(typeof set.data[0][key] == 'number') {
-                            set.data.sort((a, b) => {
-                                if (a[key] == b[key]) {
-                                    for(let j=1; j<keys.length; j++) {
-                                        if(a[keys[j]] != b[keys[j]]) {
-                                            if (dir == 'DOWN')
-                                                return b[keys[j]] - a[keys[j]];
-                                            else
-                                                return a[keys[j]] - b[keys[j]];
+                        try {
+                            if (typeof set.data[0][key] == 'number') {
+                                set.data.sort((a, b) => {
+                                    if (a[key] == b[key]) {
+                                        for (let j = 1; j < keys.length; j++) {
+                                            if (a[keys[j]] != b[keys[j]]) {
+                                                if (dir == 'DOWN')
+                                                    return b[keys[j]] - a[keys[j]];
+                                                else
+                                                    return a[keys[j]] - b[keys[j]];
+                                            }
                                         }
                                     }
-                                }
-                                if(dir == 'DOWN')
-                                    return b[key] - a[key];
-                                else
-                                    return a[key] - b[key];
-                            });
-                        }
+                                    if (dir == 'DOWN')
+                                        return b[key] - a[key];
+                                    else
+                                        return a[key] - b[key];
+                                });
+                            }
 
-                        else {
-                            set.data.sort((a, b) => {
-                                if (a[key] == b[key]) {
-                                    for(let j=1; j<keys.length; j++) {
-                                        if(a[keys[j]] != b[keys[j]]) {
-                                            if(dir == 'DOWN')
-                                                return a[keys[j]] > b[keys[j]] ? -1 : 1;
-                                            else
-                                                return a[keys[j]] < b[keys[j]] ? -1 : 1;
+                            else {
+                                set.data.sort((a, b) => {
+                                    if (a[key] == b[key]) {
+                                        for (let j = 1; j < keys.length; j++) {
+                                            if (a[keys[j]] != b[keys[j]]) {
+                                                if (dir == 'DOWN')
+                                                    return a[keys[j]] > b[keys[j]] ? -1 : 1;
+                                                else
+                                                    return a[keys[j]] < b[keys[j]] ? -1 : 1;
+                                            }
                                         }
                                     }
-                                }
-                                if(dir == 'DOWN')
-                                    return a[key] > b[key] ? -1 : 1;
-                                else
-                                    return a[key] < b[key] ? -1 : 1;
-                            });
+                                    if (dir == 'DOWN')
+                                        return a[key] > b[key] ? -1 : 1;
+                                    else
+                                        return a[key] < b[key] ? -1 : 1;
+                                });
+                            }
+                        }
+                        catch(err) {
+                            reject(err);
                         }
                     }
                 }
