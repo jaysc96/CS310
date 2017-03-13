@@ -24,9 +24,9 @@ export default class HandleServer {
             req.once('end', function () {
                 req.body = Buffer.concat(buffer).toString('base64');
                 this.inf.addDataset(id, req.body).then(function (resp: InsightResponse) {
-                    res.json(resp.code,resp.body);
+                    res.send(resp.code,resp.body);
                 }).catch(function (err: InsightResponse) {
-                    res.json(err.code,err.body );
+                    res.send(err.code,err.body );
                 });
             });
         }
@@ -39,9 +39,9 @@ export default class HandleServer {
     public postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
         let query: QueryRequest = req.params;
         this.inf.performQuery(query).then(function(resp: InsightResponse){
-            res.json(resp.code,resp.body);
+            res.send(resp.code,resp.body);
         }).catch(function (err: InsightResponse) {
-            res.json(err.code,err.body);
+            res.send(err.code,err.body);
         });
         return next();
     }
@@ -51,9 +51,9 @@ export default class HandleServer {
             let id = req.params.id;
 
             this.inf.removeDataset(id).then(function (resp: InsightResponse) {
-                res.json(resp.code,resp.body);
+                res.send(resp.code,resp.body);
             }).catch(function (err: InsightResponse) {
-                res.json(err.code,err.body );
+                res.send(err.code,err.body );
             });
         }
         catch(err) {
