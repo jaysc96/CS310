@@ -353,9 +353,7 @@ export default class Querying {
                 };
                 arr = flatten(arr);
             }
-
-            if(grp.length == 6)
-                console.log(arr);
+            
             dset.data = arr;
             return dset;
         }
