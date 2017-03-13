@@ -7,6 +7,7 @@ import restify = require('restify');
 
 import Log from "../Util";
 import {InsightResponse} from "../controller/IInsightFacade";
+import HandleServer from "./HandleServer";
 
 /**
  * This configures the REST endpoints for the server.
@@ -48,6 +49,7 @@ export default class Server {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
+                let hs = new HandleServer();
                 Log.info('Server::start() - start');
 
                 that.rest = restify.createServer({
@@ -64,6 +66,13 @@ export default class Server {
                 that.rest.get('/echo/:msg', Server.echo);
 
                 // Other endpoints will go here
+                that.rest.get('/', hs.getIt);
+
+                that.rest.put('/dataset/:id', hs.putDataset);
+
+                that.rest.post('/query', restify.bodyParser(), hs.postQuery);
+
+                that.rest.del('/dataset/:id', hs.deleteDataset);
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);

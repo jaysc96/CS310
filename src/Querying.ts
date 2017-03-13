@@ -268,6 +268,9 @@ export default class Querying {
             if (grp.length == 0)
                 throw new Error('Empty GROUPS');
 
+            if(set.data.length == 0)
+                return set;
+
             for (let g of grp) {
                 if (g.indexOf('_') !== -1) {
                     let key = g.split('_')[0];
@@ -367,7 +370,10 @@ export default class Querying {
                             o[g] = x[g];
                         }
                         for (let key of aptknkeys) {
-                            o[key] = x[key];
+                            if(key == "courses_uuid")
+                                o[key] = parseInt(x[key]);
+                            else
+                                o[key] = x[key];
                         }
                         return o;
                     });

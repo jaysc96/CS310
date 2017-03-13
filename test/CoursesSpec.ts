@@ -249,9 +249,9 @@ describe("CoursesSpec", function () {
                 "COLUMNS": [
                     "courses_dept",
                     "maxAvg",
-                    "sumAvg"
+                    "sumUUID"
                 ],
-                "ORDER": "sumAvg",
+                "ORDER": "maxAvg",
                 "FORM": "TABLE"
             },
             "TRANSFORMATIONS": {
@@ -261,8 +261,8 @@ describe("CoursesSpec", function () {
                         "MAX": "courses_avg"
                     }
                 }, {
-                    "sumAvg": {
-                        "SUM": "courses_avg"
+                    "sumUUID": {
+                        "SUM": "courses_uuid"
                     }
                 }]
             }
