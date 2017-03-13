@@ -248,8 +248,7 @@ describe("CoursesSpec", function () {
             "OPTIONS": {
                 "COLUMNS": [
                     "courses_dept",
-                    "maxAvg",
-                    "sumUUID"
+                    "maxAvg"
                 ],
                 "ORDER": "maxAvg",
                 "FORM": "TABLE"
@@ -260,11 +259,38 @@ describe("CoursesSpec", function () {
                     "maxAvg": {
                         "MAX": "courses_avg"
                     }
-                }, {
-                    "sumUUID": {
-                        "SUM": "courses_uuid"
-                    }
                 }]
+            }
+        };
+        return inf.performQuery(query).then(function (inr: InsightResponse) {
+            Log.test(JSON.stringify(inr));
+            expect(inr.code).to.equal(200);
+        }).catch(function (inr: InsightResponse) {
+            Log.error(JSON.stringify(inr));
+            expect.fail();
+        });
+    });
+
+    it("Sacriligious", function () {
+        let query: QueryRequest = {
+            "WHERE": {},
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept", "courses_year", "courses_id", "courses_avg", "courses_instructor",
+                    "courses_title", "minGrade"
+                ],
+                "ORDER": "courses_dept",
+                "FORM": "TABLE"
+            },
+            "TRANSFORMATIONS": {
+                "GROUP": ["courses_dept", "courses_year", "courses_id", "courses_avg", "courses_instructor", "courses_title"],
+                "APPLY": [
+                    {
+                        "minGrade": {
+                            "MIN": "courses_avg"
+                        }
+                    }
+                ]
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {

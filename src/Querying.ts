@@ -330,13 +330,32 @@ export default class Querying {
                 }
             }
 
-            if (set.data.length == 0)
-                return set;
             let arr: any;
             arr = this.groupData(set.data, grp, 0, apkeys, aptkns, aptknkeys);
-            if (grp.length > 1)
-                arr = [].concat.apply([], arr);
+            if (grp.length > 1) {
+                const flatten = function(arr: any[], result: any[] = []) {
+                    for (let i = 0, length = arr.length; i < length; i++) {
+                        const value = arr[i];
+                        if (Array.isArray(value)) {
+                            for (let i = 0, length = value.length; i < length; i++) {
+                                const value2 = value[i];
+                                if (Array.isArray(value2)) {
+                                    flatten(value2, result)
+                                } else {
+                                    result.push(value2)
+                                }
+                            }
+                        } else {
+                            result.push(value)
+                        }
+                    }
+                    return result
+                };
+                arr = flatten(arr);
+            }
 
+            if(grp.length == 6)
+                console.log(arr);
             dset.data = arr;
             return dset;
         }
@@ -356,9 +375,16 @@ export default class Querying {
                 let obj: any[] = [];
 
                 for (let o of data) {
-                    if (!d.includes(o[g])) {
+                    if (!d.includes(o[g]))
                         d.push(o[g]);
-                    }
+                }
+
+                if(d.length == data.length) {
+                    data.forEach(x => {
+                        let arr: any[] = [x];
+                        return Object.assign(x, this.applyToGroup(arr, apkeys, aptkns, aptknkeys, grp));
+                    });
+                    return data;
                 }
 
                 for (let val of d) {
@@ -366,13 +392,12 @@ export default class Querying {
                         return x[g] == val;
                     }).map(x => {
                         let o: any = {};
-                        for (let g of grp) {
-                            o[g] = x[g];
+                        for (let g2 of grp) {
+                            if(x.hasOwnProperty(g2))
+                                o[g2] = x[g2];
                         }
                         for (let key of aptknkeys) {
-                            if(key == "courses_uuid")
-                                o[key] = parseInt(x[key]);
-                            else
+                            if(x.hasOwnProperty(key))
                                 o[key] = x[key];
                         }
                         return o;

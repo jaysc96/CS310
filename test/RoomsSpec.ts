@@ -173,7 +173,7 @@ describe("RoomsSpec", function () {
                 "GROUP": ["rooms_shortname"],
                 "APPLY": [{
                     "sumSeats": {
-                        "SUM": "rooms_seats"
+                        "SUM": "rooms_lon"
                     }
                 }]
             }
