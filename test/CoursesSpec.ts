@@ -263,7 +263,7 @@ describe("CoursesSpec", function () {
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
-            Log.test(JSON.stringify(inr));
+            //Log.test(JSON.stringify(inr));
             expect(inr.code).to.equal(200);
         }).catch(function (inr: InsightResponse) {
             Log.error(JSON.stringify(inr));
@@ -294,7 +294,7 @@ describe("CoursesSpec", function () {
             }
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
-            Log.test(JSON.stringify(inr));
+            //Log.test(JSON.stringify(inr));
             expect(inr.code).to.equal(200);
         }).catch(function (inr: InsightResponse) {
             Log.error(JSON.stringify(inr));

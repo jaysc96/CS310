@@ -353,7 +353,7 @@ export default class Querying {
                 };
                 arr = flatten(arr);
             }
-            
+
             dset.data = arr;
             return dset;
         }
