@@ -9,7 +9,7 @@ export default class HandleServer {
     private inf = new InsightFacade();
 
     public getIt(req: restify.Request, res: restify.Response, next: restify.Next) {
-        return next();
+        //return next();
     }
 
     public putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
