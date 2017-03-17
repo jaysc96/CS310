@@ -66,13 +66,13 @@ export default class Server {
                 that.rest.get('/echo/:msg', Server.echo);
 
                 // Other endpoints will go here
-                that.rest.get('/', hs.getIt);
+                that.rest.get('/', HandleServer.getIt);
 
-                that.rest.put('/dataset/:id', hs.putDataset);
+                that.rest.put('/dataset/:id', HandleServer.putDataset);
 
-                that.rest.post('/query', restify.bodyParser(), hs.postQuery);
+                that.rest.post('/query', restify.bodyParser(), HandleServer.postQuery);
 
-                that.rest.del('/dataset/:id', hs.deleteDataset);
+                that.rest.del('/dataset/:id', HandleServer.deleteDataset);
 
                 that.rest.listen(that.port, function () {
                     Log.info('Server::start() - restify listening: ' + that.rest.url);

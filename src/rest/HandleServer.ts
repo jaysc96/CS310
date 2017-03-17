@@ -6,13 +6,13 @@ import InsightFacade from "../controller/InsightFacade";
 import {InsightResponse, QueryRequest} from "../controller/IInsightFacade";
 
 export default class HandleServer {
-    private inf = new InsightFacade();
+    private static inf = new InsightFacade();
 
-    public getIt(req: restify.Request, res: restify.Response, next: restify.Next) {
-        //return next();
+    public static getIt(req: restify.Request, res: restify.Response, next: restify.Next) {
+        return next();
     }
 
-    public putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public static putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
             let id = req.params.id;
 
@@ -24,9 +24,9 @@ export default class HandleServer {
             req.once('end', function () {
                 req.body = Buffer.concat(buffer).toString('base64');
                 this.inf.addDataset(id, req.body).then(function (resp: InsightResponse) {
-                    res.send(resp.code,resp.body);
+                    res.json(resp.code,resp.body);
                 }).catch(function (err: InsightResponse) {
-                    res.send(err.code,err.body );
+                    res.json(err.code,err.body );
                 });
             });
         }
@@ -36,24 +36,24 @@ export default class HandleServer {
         return next();
     }
 
-    public postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
         let query: QueryRequest = req.params;
         this.inf.performQuery(query).then(function(resp: InsightResponse){
-            res.send(resp.code,resp.body);
+            res.json(resp.code,resp.body);
         }).catch(function (err: InsightResponse) {
-            res.send(err.code,err.body);
+            res.json(err.code,err.body);
         });
         return next();
     }
 
-    public deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public static deleteDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
             let id = req.params.id;
 
             this.inf.removeDataset(id).then(function (resp: InsightResponse) {
-                res.send(resp.code,resp.body);
+                res.json(resp.code,resp.body);
             }).catch(function (err: InsightResponse) {
-                res.send(err.code,err.body );
+                res.json(err.code,err.body );
             });
         }
         catch(err) {
