@@ -49,7 +49,6 @@ export default class Server {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                let hs = new HandleServer();
                 Log.info('Server::start() - start');
 
                 that.rest = restify.createServer({
