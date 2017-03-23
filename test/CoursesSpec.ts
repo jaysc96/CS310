@@ -237,7 +237,7 @@ describe("CoursesSpec", function () {
                 Log.test(JSON.stringify(inr));
                 expect(inr.code).to.equal(200);
             }).catch(function (inr: InsightResponse) {
-                //Log.error(JSON.stringify(inr));
+                Log.error(JSON.stringify(inr));
                 expect.fail();
             });
     });
