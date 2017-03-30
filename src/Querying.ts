@@ -577,7 +577,7 @@ export default class Querying {
                     if (flag == 0)
                         fulfill(set);
                     else
-                        reject(new Error("Invalid LT key"));
+                        reject(new Error("Invalid GT key"));
                 }
             }
             catch(err) {

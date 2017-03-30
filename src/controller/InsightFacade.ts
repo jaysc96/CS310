@@ -222,6 +222,7 @@ export default class InsightFacade implements IInsightFacade {
                                     c[id + '_fail'] = res.Fail;
                                     c[id + '_audit'] = res.Audit;
                                     c[id + '_year'] = res.Section == "overall" ? 1900 : parseInt(res.Year);
+                                    c[id + '_size'] = res.Pass + res.Fail + res.Audit;
                                     set.add(c);
                                 }
                             }

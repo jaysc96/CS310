@@ -59,6 +59,14 @@ export default class Server {
                 // curl -is  http://localhost:4321/echo/myMessage
                 that.rest.get('/echo/:msg', Server.echo);
 
+                that.rest.get("/public/.*", restify.serveStatic({
+                    directory: __dirname
+                }));
+
+                that.rest.get("/views/.*", restify.serveStatic({
+                    directory: __dirname
+                }));
+
                 // Other endpoints will go here
                 that.rest.get('/', HandleServer.gotoHome);
 
