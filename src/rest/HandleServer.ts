@@ -2,14 +2,77 @@
  * Created by jaysinghchauhan on 3/12/17.
  */
 import restify = require('restify');
+import fs = require('fs');
 import InsightFacade from "../controller/InsightFacade";
 import {InsightResponse, QueryRequest} from "../controller/IInsightFacade";
+import Log from "../Util";
 
 export default class HandleServer {
     private static inf = new InsightFacade();
 
-    public static getIt(req: restify.Request, res: restify.Response, next: restify.Next) {
-        return next();
+    public static gotoHome(req: restify.Request, res: restify.Response, next: restify.Next) {
+        fs.readFile('./src/rest/views/index.html', 'utf8', function (err: Error, file: Buffer) {
+            if (err) {
+                res.send(400);
+                Log.error(JSON.stringify(err));
+                return next();
+            }
+            res.write(file);
+            res.end();
+            return next();
+        });
+    }
+
+    public static gotoCourses(req: restify.Request, res: restify.Response, next: restify.Next) {
+        fs.readFile('./src/rest/views/course_explorer.html', 'utf8', function (err: Error, file: Buffer) {
+            if (err) {
+                res.send(400);
+                Log.error(JSON.stringify(err));
+                return next();
+            }
+            res.write(file);
+            res.end();
+            return next();
+        });
+    }
+
+    public static gotoRooms(req: restify.Request, res: restify.Response, next: restify.Next) {
+        fs.readFile('./src/rest/views/room_explorer.html', 'utf8', function (err: Error, file: Buffer) {
+            if (err) {
+                res.send(400);
+                Log.error(JSON.stringify(err));
+                return next();
+            }
+            res.write(file);
+            res.end();
+            return next();
+        });
+    }
+
+    public static gotoScheduler(req: restify.Request, res: restify.Response, next: restify.Next) {
+        fs.readFile('./src/rest/views/schedule.html', 'utf8', function (err: Error, file: Buffer) {
+            if (err) {
+                res.send(400);
+                Log.error(JSON.stringify(err));
+                return next();
+            }
+            res.write(file);
+            res.end();
+            return next();
+        });
+    }
+
+    public static gotoTryMe(req: restify.Request, res: restify.Response, next: restify.Next) {
+        fs.readFile('./src/rest/views/tryme.html', 'utf8', function (err: Error, file: Buffer) {
+            if (err) {
+                res.send(400);
+                Log.error(JSON.stringify(err));
+                return next();
+            }
+            res.write(file);
+            res.end();
+            return next();
+        });
     }
 
     public static putDataset(req: restify.Request, res: restify.Response, next: restify.Next) {

@@ -551,7 +551,7 @@ export default class Querying {
                 let key = keys[0];
                 let id = key.split('_')[0];
                 if (id != that.id) {
-                    if(!that.isValidId(id)) {
+                    if(!Querying.isValidId(id)) {
                         that.err.missing.push(id);
                         reject(that.err);
                     }
@@ -599,7 +599,7 @@ export default class Querying {
                 let data: any[];
                 let id = key.split('_')[0];
                 if (id != that.id) {
-                    if(!that.isValidId(id)) {
+                    if(!Querying.isValidId(id)) {
                         that.err.missing.push(id);
                         reject(that.err);
                     }
@@ -647,7 +647,7 @@ export default class Querying {
                 let data: any[];
                 let id = key.split('_')[0];
                 if (id != that.id){
-                    if(!that.isValidId(id)) {
+                    if(!Querying.isValidId(id)) {
                         that.err.missing.push(id);
                         reject(that.err);
                     }
@@ -697,7 +697,7 @@ export default class Querying {
                 let data: any[];
 
                 if (id != that.id){
-                    if(!that.isValidId(id)) {
+                    if(!Querying.isValidId(id)) {
                         that.err.missing.push(id);
                         reject(that.err);
                     }
@@ -792,7 +792,7 @@ export default class Querying {
         })
     }
 
-    private isValidId(id: string): boolean {
+    private static isValidId(id: string): boolean {
         return id == 'rooms' || id == 'courses';
     }
 
