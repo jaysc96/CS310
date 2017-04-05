@@ -11,13 +11,100 @@
 <body>
 <div class="container-fluid">
     <ul class="nav nav-pills">
-        <li><a href="/">Home</a></li>
+        <li><a href="/">insightUBC</a></li>
         <li><a href="course_explorer.html">Course Explorer</a></li>
         <li><a href="room_explorer.html">Room Explorer</a></li>
         <li class="active"><a>Scheduler</a></li>
         <li><a href="tryme.html">Try Me!</a></li>
     </ul>
 </div>
-
+<div class="container-fluid">
+<div class="panel-group" id="accordion2">
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="headingThree">
+            <h4 class="panel-title">
+                <a role="button" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                    Add Courses
+                </a>
+            </h4>
+        </div>
+        <div id="collapseThree" class="panel-collapse collapse">
+            <div id="coursesAdd" class="panel-body">
+                <form class="form-inline">
+                    <label for="schedDept">Department (enter multiple departments seperated by commas)</label>
+                    <input type="text" class="form-control" id="schedDept">
+                    <label for="schedNum">Course #:</label>
+                    <input type="text" class="form-control" id="schedNum">
+                    <button type="submit" class="btn btn-primary" id="schedCourses">Courses</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading" role="tab" id="headingFour">
+            <h4 class="panel-title">
+                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                    Add Rooms
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFour" class="panel-collapse collapse">
+            <div id="roomsAdd" class="panel-body">
+                <form class="form-inline">
+                    <label for="schedBldg">Building</label>
+                    <input type="text" class="form-control" id="schedBldg">
+                    <label for="schedDist">Distance from entered building:</label>
+                    <input type="text" class="form-control" id="schedDist">
+                    <button type="submit" class="btn btn-primary" id="schedRooms">Rooms</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-default" id="Schedule">Schedule</button>
+    <button type="button" class="btn btn-default" id="schedCourseList">View Scheduled Course List</button>
+</div>
+    <table class="table" id="timeTable">
+        <thead class="thead-inverse"><tr>
+            <td>Room & No. of seats</td>
+            <td>MWF 8am-9am</td>
+            <td>MWF 9am-10am</td>
+            <td>MWF 10am-11am</td>
+            <td>MWF 11am-12pm</td>
+            <td>MWF 12pm-1pm</td>
+            <td>MWF 1pm-2pm</td>
+            <td>MWF 2pm-3pm</td>
+            <td>MWF 3pm-4pm</td>
+            <td>MWF 4pm-5pm</td>
+            <td>TTh 8am-9:30am</td>
+            <td>TTh 9:30am-11am</td>
+            <td>TTh 11am-12:30pm</td>
+            <td>TTh 12:30pm-2pm</td>
+            <td>TTh 2pm-3:30pm</td>
+            <td>TTh 3:30pm-5pm</td>
+        </tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+<div class="container-fluid">
+    <div class="modal fade" id="schedCourseModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Scheduled Courses</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead class="thead-inverse"></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

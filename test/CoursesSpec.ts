@@ -217,7 +217,7 @@ describe("CoursesSpec", function () {
                     },
                     {
                         "IS": {
-                            "courses_instructor": 'a*'
+                            "courses_instructor": '*gregor*'
                         }
                     }
                 ]

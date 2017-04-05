@@ -65,19 +65,9 @@ describe("RoomsSpec", function () {
 
     it('perform complex query', function () {
         let query: QueryRequest = {
-            "WHERE":{
-                "IS":{
-                    "rooms_furniture": "Classroom-Movable Tables & Chairs"
-                }
-            },
-            "OPTIONS":{
-                "COLUMNS":[
-                    "rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address",
-                    "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"
-                ],
-                "ORDER":"rooms_name",
-                "FORM":"TABLE"
-            }
+            WHERE: {},
+            OPTIONS: {COLUMNS: ["rooms_shortname", "rooms_lat", "rooms_lon", "rooms_address", "totalSeats", "numberOfRooms"], FORM: "TABLE"},
+            TRANSFORMATIONS: {GROUP: ["rooms_shortname", "rooms_lat", "rooms_lon", "rooms_address"], APPLY: [{totalSeats: {SUM: "rooms_seats"}}, {numberOfRooms: {COUNT: "rooms_number"}}]}
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));
@@ -90,18 +80,8 @@ describe("RoomsSpec", function () {
 
     it("find rooms with plenty of seats in a building", function () {
         let query: QueryRequest = {
-            "WHERE": {
-                "GT": {
-                    "rooms_seats": 100
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "rooms_address", "rooms_name", "rooms_seats"
-                ],
-                "ORDER": "rooms_seats",
-                "FORM": "TABLE"
-            }
+            WHERE: {IS: {rooms_shortname: "DMP"}},
+            OPTIONS: {COLUMNS: ["rooms_shortname", "rooms_lat", "rooms_lon"], FORM: "TABLE"}
         };
         return inf.performQuery(query).then(function (inr: InsightResponse) {
             Log.test(JSON.stringify(inr.body));
@@ -173,7 +153,7 @@ describe("RoomsSpec", function () {
                 "GROUP": ["rooms_shortname"],
                 "APPLY": [{
                     "sumSeats": {
-                        "SUM": "rooms_lon"
+                        "SUM": "rooms_seats"
                     }
                 }]
             }

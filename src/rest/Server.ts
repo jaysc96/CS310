@@ -63,10 +63,6 @@ export default class Server {
                     directory: __dirname
                 }));
 
-                that.rest.get("/views/.*", restify.serveStatic({
-                    directory: __dirname
-                }));
-
                 // Other endpoints will go here
                 that.rest.get('/', HandleServer.gotoHome);
 

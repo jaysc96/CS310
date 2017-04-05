@@ -11,13 +11,40 @@
 <body>
 <div class="container-fluid">
     <ul class="nav nav-pills">
-        <li><a href="/">Home</a></li>
+        <li><a href="/">insightUBC</a></li>
         <li><a href="course_explorer.html">Course Explorer</a></li>
         <li><a href="room_explorer.html">Room Explorer</a></li>
         <li><a href="schedule.html">Scheduler</a></li>
         <li class="active"><a>Try Me!</a></li>
     </ul>
 </div>
-
+<div class="container-fluid">
+    <form class="form-inline">
+        <label for="bldg">Building name:</label>
+        <input type="text" class="form-control" id="bldg">
+        <button type="button" class="btn btn-primary" id="tryMe">Go</button>
+    </form>
+</div>
+<div class="container-fluid">
+    <div class="modal fade" id="tryMeModal" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Buildings</h4>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead class="thead-inverse"></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
